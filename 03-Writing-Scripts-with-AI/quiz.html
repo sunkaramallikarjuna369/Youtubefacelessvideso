@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 3 Quiz - Writing Scripts with AI!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #11998e;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .question-container {
+            margin-bottom: 30px;
+        }
+        
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #11998e;
+        }
+        
+        .question-number {
+            color: #11998e;
+            font-weight: bold;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .option {
+            padding: 15px 20px;
+            background: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+        }
+        
+        .option:hover {
+            background: #e0fff0;
+            border-color: #11998e;
+            transform: translateX(10px);
+        }
+        
+        .option.selected {
+            background: #11998e;
+            color: white;
+            border-color: #11998e;
+        }
+        
+        .option.correct {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .option.incorrect {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .results {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .score {
+            font-size: 4em;
+            color: #11998e;
+            font-weight: bold;
+        }
+        
+        .badge {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .message {
+            font-size: 1.5em;
+            color: #333;
+            margin: 20px 0;
+        }
+        
+        .stars {
+            font-size: 2em;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 3 Quiz</h1>
+        <p class="subtitle">Writing Scripts with AI!</p>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="quiz-container">
+            <!-- Questions will be inserted here -->
+        </div>
+        
+        <div id="results" class="results hidden">
+            <div class="badge">📝</div>
+            <div class="score" id="score">0/8</div>
+            <div class="stars" id="stars"></div>
+            <div class="message" id="message"></div>
+            <button class="btn btn-primary" onclick="restartQuiz()">Try Again!</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "What is Ollama?",
+                options: [
+                    "A video editing software",
+                    "A free AI that runs on your computer",
+                    "A type of YouTube video",
+                    "A social media platform"
+                ],
+                correct: 1,
+                explanation: "Ollama is a free AI that runs locally on your computer - no internet needed!"
+            },
+            {
+                question: "What is a video script?",
+                options: [
+                    "The code that makes videos play",
+                    "A type of font",
+                    "The words that will be spoken in your video",
+                    "A video file format"
+                ],
+                correct: 2,
+                explanation: "A script is what you (or AI) will say in your video - it's like a plan for your words!"
+            },
+            {
+                question: "What should a good video script start with?",
+                options: [
+                    "A boring introduction",
+                    "An exciting hook to grab attention",
+                    "A long list of credits",
+                    "Silence"
+                ],
+                correct: 1,
+                explanation: "Always start with a hook - something exciting that makes people want to keep watching!"
+            },
+            {
+                question: "Why is AI helpful for writing scripts?",
+                options: [
+                    "It makes videos automatically",
+                    "It can help you write faster and give you ideas",
+                    "It uploads videos for you",
+                    "It creates thumbnails"
+                ],
+                correct: 1,
+                explanation: "AI helps you write faster and can give you great ideas when you're stuck!"
+            },
+            {
+                question: "What command starts Ollama on your computer?",
+                options: [
+                    "start ollama",
+                    "ollama serve",
+                    "run ai",
+                    "begin ollama"
+                ],
+                correct: 1,
+                explanation: "Type 'ollama serve' in Command Prompt to start Ollama!"
+            },
+            {
+                question: "What should a video script end with?",
+                options: [
+                    "Nothing special",
+                    "A sad goodbye",
+                    "A call to action (like 'subscribe!')",
+                    "A long silence"
+                ],
+                correct: 2,
+                explanation: "Always end with a call to action - ask viewers to like, subscribe, or comment!"
+            },
+            {
+                question: "How long should a beginner's video script be?",
+                options: [
+                    "30 seconds",
+                    "1-3 minutes when read aloud",
+                    "30 minutes",
+                    "2 hours"
+                ],
+                correct: 1,
+                explanation: "Start with 1-3 minute videos - they're easier to make and people watch them fully!"
+            },
+            {
+                question: "What makes a script 'engaging'?",
+                options: [
+                    "Using big, complicated words",
+                    "Being fun, interesting, and easy to understand",
+                    "Being as long as possible",
+                    "Using lots of silence"
+                ],
+                correct: 1,
+                explanation: "Engaging scripts are fun, interesting, and easy to understand - just like talking to a friend!"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        function renderQuestion() {
+            const container = document.getElementById('quiz-container');
+            const q = questions[currentQuestion];
+            
+            let optionsHTML = q.options.map((opt, i) => 
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+            
+            container.innerHTML = `
+                <div class="question-container">
+                    <div class="question">
+                        <span class="question-number">Question ${currentQuestion + 1} of ${questions.length}:</span><br><br>
+                        ${q.question}
+                    </div>
+                    <div class="options">
+                        ${optionsHTML}
+                    </div>
+                    <div class="feedback" id="feedback"></div>
+                    <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>
+                        ${currentQuestion === questions.length - 1 ? 'See Results!' : 'Next Question'}
+                    </button>
+                </div>
+            `;
+            
+            updateProgress();
+            answered = false;
+        }
+
+        function selectAnswer(index) {
+            if (answered) return;
+            answered = true;
+            
+            const options = document.querySelectorAll('.option');
+            const q = questions[currentQuestion];
+            const feedback = document.getElementById('feedback');
+            
+            options.forEach((opt, i) => {
+                opt.style.pointerEvents = 'none';
+                if (i === q.correct) {
+                    opt.classList.add('correct');
+                } else if (i === index) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback correct';
+                feedback.innerHTML = `<strong>Awesome!</strong> ${q.explanation}`;
+            } else {
+                feedback.className = 'feedback incorrect';
+                feedback.innerHTML = `<strong>Not quite!</strong> ${q.explanation}`;
+            }
+            
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion >= questions.length) {
+                showResults();
+            } else {
+                renderQuestion();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('score').textContent = `${score}/${questions.length}`;
+            
+            const percentage = (score / questions.length) * 100;
+            let stars = '';
+            let message = '';
+            
+            if (percentage === 100) {
+                stars = '⭐⭐⭐⭐⭐';
+                message = 'PERFECT! You\'re a Script Master, Krwutarth!';
+            } else if (percentage >= 80) {
+                stars = '⭐⭐⭐⭐';
+                message = 'Amazing job! You really understand AI script writing!';
+            } else if (percentage >= 60) {
+                stars = '⭐⭐⭐';
+                message = 'Good work! Review the module and try again!';
+            } else if (percentage >= 40) {
+                stars = '⭐⭐';
+                message = 'Nice try! Read the module again and you\'ll do better!';
+            } else {
+                stars = '⭐';
+                message = 'Keep learning! Read Module 3 again and try the quiz!';
+            }
+            
+            document.getElementById('stars').textContent = stars;
+            document.getElementById('message').textContent = message;
+            document.getElementById('progress').style.width = '100%';
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            renderQuestion();
+        }
+
+        // Start the quiz
+        renderQuestion();
+    </script>
+</body>
+</html>
