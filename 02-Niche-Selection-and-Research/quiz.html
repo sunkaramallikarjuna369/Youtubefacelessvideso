@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2 Quiz: Niche Selection and Research</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 2em; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 5px; margin-bottom: 30px; overflow: hidden; }
+        .progress { height: 100%; background: linear-gradient(90deg, #11998e, #38ef7d); border-radius: 5px; transition: width 0.5s ease; }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .question-number { color: #11998e; font-size: 0.9em; margin-bottom: 10px; }
+        .question { font-size: 1.3em; color: #333; margin-bottom: 25px; line-height: 1.5; }
+        .options { display: flex; flex-direction: column; gap: 15px; }
+        .option { padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; font-size: 1em; }
+        .option:hover { border-color: #11998e; background: #f0fff4; }
+        .option.selected { border-color: #11998e; background: #e8f5e9; }
+        .option.correct { border-color: #4CAF50; background: #e8f5e9; }
+        .option.incorrect { border-color: #f44336; background: #ffebee; }
+        .feedback { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; }
+        .feedback.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback.correct { background: #e8f5e9; border: 1px solid #4CAF50; color: #2e7d32; }
+        .feedback.incorrect { background: #ffebee; border: 1px solid #f44336; color: #c62828; }
+        .btn { display: inline-block; padding: 15px 40px; background: linear-gradient(90deg, #11998e, #38ef7d); color: white; border: none; border-radius: 30px; font-size: 1em; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; margin-top: 25px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-container { text-align: center; }
+        .results { text-align: center; display: none; }
+        .results.show { display: block; animation: fadeIn 0.5s ease; }
+        .score-circle { width: 200px; height: 200px; border-radius: 50%; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); display: flex; align-items: center; justify-content: center; margin: 30px auto; box-shadow: 0 10px 40px rgba(17, 153, 142, 0.4); }
+        .score-inner { width: 160px; height: 160px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-number { font-size: 3em; font-weight: bold; color: #11998e; }
+        .score-label { color: #666; font-size: 0.9em; }
+        .result-message { font-size: 1.5em; color: #333; margin-bottom: 20px; }
+        .result-details { color: #666; margin-bottom: 30px; line-height: 1.8; }
+        .explanation { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 0.95em; color: #555; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 2 Quiz</h1>
+        <p class="subtitle">Niche Selection and Research</p>
+        <div class="progress-bar"><div class="progress" id="progress" style="width: 0%"></div></div>
+
+        <div id="quiz-container">
+            <div class="question-container active" data-question="1">
+                <p class="question-number">Question 1 of 8</p>
+                <p class="question">What is the "100 Video Test" used for in niche validation?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Testing if you can upload 100 videos in a month</div>
+                    <div class="option" data-answer="b">Checking if you can brainstorm 100 unique video ideas in your niche</div>
+                    <div class="option" data-answer="c">Watching 100 competitor videos</div>
+                    <div class="option" data-answer="d">Getting 100 views on your first video</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(1, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="2">
+                <p class="question-number">Question 2 of 8</p>
+                <p class="question">Which free tool shows search interest trends over time?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Social Blade</div>
+                    <div class="option" data-answer="b">VidIQ</div>
+                    <div class="option" data-answer="c">Google Trends</div>
+                    <div class="option" data-answer="d">TubeBuddy</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(2, 'c')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="3">
+                <p class="question-number">Question 3 of 8</p>
+                <p class="question">What is a "sub-niche" strategy?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Creating a secondary YouTube channel</div>
+                    <div class="option" data-answer="b">Focusing on a specific segment within a broader niche to reduce competition</div>
+                    <div class="option" data-answer="c">Subscribing to other channels in your niche</div>
+                    <div class="option" data-answer="d">Creating shorter videos than competitors</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(3, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="4">
+                <p class="question-number">Question 4 of 8</p>
+                <p class="question">Which website helps you analyze competitor YouTube channel statistics?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Google Analytics</div>
+                    <div class="option" data-answer="b">Social Blade</div>
+                    <div class="option" data-answer="c">Facebook Insights</div>
+                    <div class="option" data-answer="d">Twitter Analytics</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(4, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="5">
+                <p class="question-number">Question 5 of 8</p>
+                <p class="question">What is "Content Gap Analysis"?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Finding topics that competitors haven't covered well</div>
+                    <div class="option" data-answer="b">Measuring the time between your video uploads</div>
+                    <div class="option" data-answer="c">Analyzing gaps in your video editing</div>
+                    <div class="option" data-answer="d">Counting words in your scripts</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(5, 'a')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="6">
+                <p class="question-number">Question 6 of 8</p>
+                <p class="question">Why should you avoid choosing a niche based ONLY on high CPM?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">High CPM niches are illegal</div>
+                    <div class="option" data-answer="b">High CPM means nothing without views; you need to create engaging content</div>
+                    <div class="option" data-answer="c">YouTube doesn't allow high CPM niches</div>
+                    <div class="option" data-answer="d">High CPM niches have no audience</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(6, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="7">
+                <p class="question-number">Question 7 of 8</p>
+                <p class="question">What does YouTube Autocomplete help you discover?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Your channel's subscriber count</div>
+                    <div class="option" data-answer="b">Popular search terms and what people are actively searching for</div>
+                    <div class="option" data-answer="c">Your video's watch time</div>
+                    <div class="option" data-answer="d">Competitor's revenue</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(7, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="8">
+                <p class="question-number">Question 8 of 8</p>
+                <p class="question">Which is a better niche choice: "Technology" or "AI Tools for Productivity"?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Technology - because it's broader and has more audience</div>
+                    <div class="option" data-answer="b">AI Tools for Productivity - because it's focused and has less competition</div>
+                    <div class="option" data-answer="c">Both are equally good</div>
+                    <div class="option" data-answer="d">Neither - both are bad choices</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(8, 'b')" disabled>Check Answer</button></div>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="score-circle">
+                <div class="score-inner">
+                    <span class="score-number" id="score-number">0</span>
+                    <span class="score-label">out of 8</span>
+                </div>
+            </div>
+            <p class="result-message" id="result-message"></p>
+            <p class="result-details" id="result-details"></p>
+            <button class="btn" onclick="restartQuiz()">Try Again</button>
+            <button class="btn" onclick="window.location.href='../03-Content-Research-and-Script-Writing/README.md'" style="margin-left: 10px;">Next Module</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        let score = 0;
+        let answered = new Set();
+        const totalQuestions = 8;
+        const correctAnswers = ['b', 'c', 'b', 'b', 'a', 'b', 'b', 'b'];
+
+        const explanations = {
+            1: "The 100 Video Test helps validate if your niche has enough content potential. If you can't brainstorm 100 unique video ideas, you may run out of content too quickly.",
+            2: "Google Trends (trends.google.com) is a free tool that shows how search interest for topics changes over time. It helps identify growing vs declining niches.",
+            3: "A sub-niche strategy means focusing on a specific segment within a broader category. For example, 'Finance for College Students' instead of just 'Finance'. This reduces competition while maintaining audience size.",
+            4: "Social Blade (socialblade.com) provides detailed statistics about YouTube channels including subscriber growth, estimated earnings, and upload patterns.",
+            5: "Content Gap Analysis involves finding topics, questions, or angles that existing channels haven't covered well. This helps you create unique content that fills market needs.",
+            6: "High CPM only matters if you get views. A $50 CPM niche with 100 views earns $5, while a $5 CPM niche with 100,000 views earns $500. Balance earning potential with your ability to create engaging content.",
+            7: "YouTube Autocomplete shows what people are actively searching for. When you type a keyword, the suggestions represent real search demand you can target.",
+            8: "Focused niches like 'AI Tools for Productivity' have less competition and allow you to become an authority. Broad niches like 'Technology' are oversaturated and make it hard to stand out."
+        };
+
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const container = this.closest('.question-container');
+                const questionNum = parseInt(container.dataset.question);
+                if (answered.has(questionNum)) return;
+                container.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                container.querySelector('.btn').disabled = false;
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            if (answered.has(questionNum)) return;
+            const container = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = container.querySelector('.option.selected');
+            if (!selected) return;
+            answered.add(questionNum);
+            const userAnswer = selected.dataset.answer;
+            const feedback = container.querySelector('.feedback');
+            container.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+            });
+            if (userAnswer === correctAnswer) {
+                score++;
+                selected.classList.add('correct');
+                feedback.className = 'feedback show correct';
+                feedback.innerHTML = `<strong>Correct!</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            } else {
+                selected.classList.add('incorrect');
+                feedback.className = 'feedback show incorrect';
+                feedback.innerHTML = `<strong>Incorrect.</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            }
+            const btn = container.querySelector('.btn');
+            if (questionNum < totalQuestions) {
+                btn.textContent = 'Next Question';
+                btn.onclick = () => nextQuestion(questionNum + 1);
+            } else {
+                btn.textContent = 'See Results';
+                btn.onclick = showResults;
+            }
+            btn.disabled = false;
+            updateProgress();
+        }
+
+        function nextQuestion(num) {
+            document.querySelector(`[data-question="${currentQuestion}"]`).classList.remove('active');
+            document.querySelector(`[data-question="${num}"]`).classList.add('active');
+            currentQuestion = num;
+        }
+
+        function updateProgress() {
+            const progress = (answered.size / totalQuestions) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+            document.getElementById('score-number').textContent = score;
+            let message, details;
+            if (score === totalQuestions) {
+                message = "Perfect Score!";
+                details = "You understand niche selection perfectly. Time to choose your niche and move on!";
+            } else if (score >= 6) {
+                message = "Great Job!";
+                details = "You have a solid understanding. Review missed questions and proceed.";
+            } else if (score >= 4) {
+                message = "Good Effort!";
+                details = "Review the README to strengthen your niche selection knowledge.";
+            } else {
+                message = "Keep Learning!";
+                details = "Re-read Module 2 materials before proceeding.";
+            }
+            document.getElementById('result-message').textContent = message;
+            document.getElementById('result-details').textContent = details;
+        }
+
+        function restartQuiz() {
+            score = 0;
+            currentQuestion = 1;
+            answered.clear();
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.style.pointerEvents = 'auto';
+            });
+            document.querySelectorAll('.feedback').forEach(fb => { fb.className = 'feedback'; fb.innerHTML = ''; });
+            document.querySelectorAll('.question-container').forEach((container, index) => {
+                container.classList.remove('active');
+                if (index === 0) container.classList.add('active');
+                const btn = container.querySelector('.btn');
+                btn.textContent = 'Check Answer';
+                btn.disabled = true;
+                btn.onclick = () => checkAnswer(index + 1, correctAnswers[index]);
+            });
+            document.getElementById('progress').style.width = '0%';
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('quiz-container').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

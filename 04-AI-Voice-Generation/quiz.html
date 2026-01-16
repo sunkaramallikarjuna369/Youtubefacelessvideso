@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 4 Quiz: AI Voice Generation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 2em; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 5px; margin-bottom: 30px; overflow: hidden; }
+        .progress { height: 100%; background: linear-gradient(90deg, #4facfe, #00f2fe); border-radius: 5px; transition: width 0.5s ease; }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .question-number { color: #4facfe; font-size: 0.9em; margin-bottom: 10px; }
+        .question { font-size: 1.3em; color: #333; margin-bottom: 25px; line-height: 1.5; }
+        .options { display: flex; flex-direction: column; gap: 15px; }
+        .option { padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; font-size: 1em; }
+        .option:hover { border-color: #4facfe; background: #f0f9ff; }
+        .option.selected { border-color: #4facfe; background: #e6f7ff; }
+        .option.correct { border-color: #4CAF50; background: #e8f5e9; }
+        .option.incorrect { border-color: #f44336; background: #ffebee; }
+        .feedback { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; }
+        .feedback.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback.correct { background: #e8f5e9; border: 1px solid #4CAF50; color: #2e7d32; }
+        .feedback.incorrect { background: #ffebee; border: 1px solid #f44336; color: #c62828; }
+        .btn { display: inline-block; padding: 15px 40px; background: linear-gradient(90deg, #4facfe, #00f2fe); color: white; border: none; border-radius: 30px; font-size: 1em; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; margin-top: 25px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(79, 172, 254, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-container { text-align: center; }
+        .results { text-align: center; display: none; }
+        .results.show { display: block; animation: fadeIn 0.5s ease; }
+        .score-circle { width: 200px; height: 200px; border-radius: 50%; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); display: flex; align-items: center; justify-content: center; margin: 30px auto; box-shadow: 0 10px 40px rgba(79, 172, 254, 0.4); }
+        .score-inner { width: 160px; height: 160px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-number { font-size: 3em; font-weight: bold; color: #4facfe; }
+        .score-label { color: #666; font-size: 0.9em; }
+        .result-message { font-size: 1.5em; color: #333; margin-bottom: 20px; }
+        .result-details { color: #666; margin-bottom: 30px; line-height: 1.8; }
+        .explanation { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 0.95em; color: #555; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 4 Quiz</h1>
+        <p class="subtitle">AI Voice Generation Tools</p>
+        <div class="progress-bar"><div class="progress" id="progress" style="width: 0%"></div></div>
+
+        <div id="quiz-container">
+            <div class="question-container active" data-question="1">
+                <p class="question-number">Question 1 of 8</p>
+                <p class="question">Which is the BEST free AI voice generation tool with no usage limits?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">ElevenLabs</div>
+                    <div class="option" data-answer="b">Microsoft Edge TTS</div>
+                    <div class="option" data-answer="c">Adobe Podcast</div>
+                    <div class="option" data-answer="d">Murf.ai</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(1, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="2">
+                <p class="question-number">Question 2 of 8</p>
+                <p class="question">What does SSML stand for in voice synthesis?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Simple Speech Markup Language</div>
+                    <div class="option" data-answer="b">Speech Synthesis Markup Language</div>
+                    <div class="option" data-answer="c">Sound System Markup Language</div>
+                    <div class="option" data-answer="d">Standard Speech Making Language</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(2, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="3">
+                <p class="question-number">Question 3 of 8</p>
+                <p class="question">Which free software is recommended for audio post-processing and editing?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Adobe Audition</div>
+                    <div class="option" data-answer="b">Pro Tools</div>
+                    <div class="option" data-answer="c">Audacity</div>
+                    <div class="option" data-answer="d">Logic Pro</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(3, 'c')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="4">
+                <p class="question-number">Question 4 of 8</p>
+                <p class="question">What command installs Edge TTS using Python's package manager?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">npm install edge-tts</div>
+                    <div class="option" data-answer="b">pip install edge-tts</div>
+                    <div class="option" data-answer="c">brew install edge-tts</div>
+                    <div class="option" data-answer="d">apt-get install edge-tts</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(4, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="5">
+                <p class="question-number">Question 5 of 8</p>
+                <p class="question">Which Edge TTS voice is recommended for professional male voiceovers?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">en-US-JennyNeural</div>
+                    <div class="option" data-answer="b">en-US-GuyNeural</div>
+                    <div class="option" data-answer="c">en-AU-NatashaNeural</div>
+                    <div class="option" data-answer="d">en-US-AriaNeural</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(5, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="6">
+                <p class="question-number">Question 6 of 8</p>
+                <p class="question">What audio process ensures consistent volume levels throughout the voiceover?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Reverb</div>
+                    <div class="option" data-answer="b">Distortion</div>
+                    <div class="option" data-answer="c">Normalization</div>
+                    <div class="option" data-answer="d">Pitch shifting</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(6, 'c')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="7">
+                <p class="question-number">Question 7 of 8</p>
+                <p class="question">What is Coqui TTS?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">A paid cloud-based TTS service</div>
+                    <div class="option" data-answer="b">An open-source TTS library that runs locally on your computer</div>
+                    <div class="option" data-answer="c">A video editing software</div>
+                    <div class="option" data-answer="d">A YouTube analytics tool</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(7, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="8">
+                <p class="question-number">Question 8 of 8</p>
+                <p class="question">What should you check in the voice quality checklist before using generated audio?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Only the file size</div>
+                    <div class="option" data-answer="b">Words pronounced correctly, appropriate pace, consistent volume, and clarity</div>
+                    <div class="option" data-answer="c">Only the file format</div>
+                    <div class="option" data-answer="d">Only the voice gender</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(8, 'b')" disabled>Check Answer</button></div>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="score-circle">
+                <div class="score-inner">
+                    <span class="score-number" id="score-number">0</span>
+                    <span class="score-label">out of 8</span>
+                </div>
+            </div>
+            <p class="result-message" id="result-message"></p>
+            <p class="result-details" id="result-details"></p>
+            <button class="btn" onclick="restartQuiz()">Try Again</button>
+            <button class="btn" onclick="window.location.href='../05-AI-Image-and-Video-Generation/README.md'" style="margin-left: 10px;">Next Module</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        let score = 0;
+        let answered = new Set();
+        const totalQuestions = 8;
+        const correctAnswers = ['b', 'b', 'c', 'b', 'b', 'c', 'b', 'b'];
+
+        const explanations = {
+            1: "Microsoft Edge TTS is the best free option because it offers high-quality neural voices with no usage limits. It's completely free and can be automated with Python scripts.",
+            2: "SSML stands for Speech Synthesis Markup Language. It allows you to control pronunciation, pauses, emphasis, and other aspects of synthesized speech for more natural-sounding output.",
+            3: "Audacity is a free, open-source audio editor perfect for post-processing TTS audio. It offers noise reduction, normalization, compression, and EQ adjustment.",
+            4: "Edge TTS is a Python package installed using pip (Python's package manager). The command 'pip install edge-tts' installs the library on your system.",
+            5: "en-US-GuyNeural is the recommended voice for professional male voiceovers. It has a clear, authoritative tone suitable for educational and business content.",
+            6: "Normalization ensures consistent volume levels throughout your audio. It adjusts the overall volume so the loudest parts reach a target level without clipping.",
+            7: "Coqui TTS is an open-source text-to-speech library that runs locally on your computer. It offers voice cloning capabilities and has no usage limits since it runs offline.",
+            8: "Before using generated audio, you should verify correct pronunciation, appropriate pace, consistent volume, no robotic artifacts, and overall clarity. This ensures professional quality."
+        };
+
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const container = this.closest('.question-container');
+                const questionNum = parseInt(container.dataset.question);
+                if (answered.has(questionNum)) return;
+                container.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                container.querySelector('.btn').disabled = false;
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            if (answered.has(questionNum)) return;
+            const container = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = container.querySelector('.option.selected');
+            if (!selected) return;
+            answered.add(questionNum);
+            const userAnswer = selected.dataset.answer;
+            const feedback = container.querySelector('.feedback');
+            container.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+            });
+            if (userAnswer === correctAnswer) {
+                score++;
+                selected.classList.add('correct');
+                feedback.className = 'feedback show correct';
+                feedback.innerHTML = `<strong>Correct!</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            } else {
+                selected.classList.add('incorrect');
+                feedback.className = 'feedback show incorrect';
+                feedback.innerHTML = `<strong>Incorrect.</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            }
+            const btn = container.querySelector('.btn');
+            if (questionNum < totalQuestions) {
+                btn.textContent = 'Next Question';
+                btn.onclick = () => nextQuestion(questionNum + 1);
+            } else {
+                btn.textContent = 'See Results';
+                btn.onclick = showResults;
+            }
+            btn.disabled = false;
+            updateProgress();
+        }
+
+        function nextQuestion(num) {
+            document.querySelector(`[data-question="${currentQuestion}"]`).classList.remove('active');
+            document.querySelector(`[data-question="${num}"]`).classList.add('active');
+            currentQuestion = num;
+        }
+
+        function updateProgress() {
+            const progress = (answered.size / totalQuestions) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+            document.getElementById('score-number').textContent = score;
+            let message, details;
+            if (score === totalQuestions) {
+                message = "Perfect Score!";
+                details = "You're ready to generate professional voiceovers! Move on to video generation.";
+            } else if (score >= 6) {
+                message = "Great Job!";
+                details = "Solid understanding of voice generation. Review missed questions and proceed.";
+            } else if (score >= 4) {
+                message = "Good Effort!";
+                details = "Review the README to strengthen your voice generation knowledge.";
+            } else {
+                message = "Keep Learning!";
+                details = "Re-read Module 4 materials before proceeding.";
+            }
+            document.getElementById('result-message').textContent = message;
+            document.getElementById('result-details').textContent = details;
+        }
+
+        function restartQuiz() {
+            score = 0;
+            currentQuestion = 1;
+            answered.clear();
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.style.pointerEvents = 'auto';
+            });
+            document.querySelectorAll('.feedback').forEach(fb => { fb.className = 'feedback'; fb.innerHTML = ''; });
+            document.querySelectorAll('.question-container').forEach((container, index) => {
+                container.classList.remove('active');
+                if (index === 0) container.classList.add('active');
+                const btn = container.querySelector('.btn');
+                btn.textContent = 'Check Answer';
+                btn.disabled = true;
+                btn.onclick = () => checkAnswer(index + 1, correctAnswers[index]);
+            });
+            document.getElementById('progress').style.width = '0%';
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('quiz-container').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

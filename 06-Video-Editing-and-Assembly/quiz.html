@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6 Quiz: Video Editing and Assembly</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00d9ff;
+        }
+        .progress-bar {
+            background: #2a2a4a;
+            border-radius: 10px;
+            height: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress {
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .question-card {
+            background: #2a2a4a;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .question-card.active {
+            display: block;
+        }
+        .question-number {
+            color: #00d9ff;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-size: 20px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option {
+            background: #1a1a2e;
+            border: 2px solid #3a3a5a;
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .option:hover {
+            border-color: #00d9ff;
+            transform: translateX(5px);
+        }
+        .option.selected {
+            border-color: #00d9ff;
+            background: rgba(0, 217, 255, 0.1);
+        }
+        .option.correct {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.2);
+        }
+        .option.incorrect {
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.2);
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            border-left: 4px solid #00d9ff;
+            display: none;
+        }
+        .btn {
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .results {
+            text-align: center;
+            display: none;
+        }
+        .score {
+            font-size: 72px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-text {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 6: Video Editing Quiz</h1>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="quiz-container"></div>
+        
+        <div class="results" id="results">
+            <div class="score" id="score">0%</div>
+            <div class="score-text" id="score-text"></div>
+            <button class="btn" onclick="restartQuiz()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Which free video editing software is recommended for professional-quality manual editing?",
+                options: [
+                    "Windows Movie Maker",
+                    "DaVinci Resolve",
+                    "iMovie",
+                    "Adobe Premiere"
+                ],
+                correct: 1,
+                explanation: "DaVinci Resolve is a professional-grade video editor that's completely free and offers features comparable to paid software like Adobe Premiere."
+            },
+            {
+                question: "What Python library is used for automated video editing in the course?",
+                options: [
+                    "OpenCV",
+                    "FFmpeg-python",
+                    "MoviePy",
+                    "PyVideo"
+                ],
+                correct: 2,
+                explanation: "MoviePy is a Python library for video editing that allows you to automate video assembly, add effects, and process videos programmatically."
+            },
+            {
+                question: "What is the recommended video resolution for YouTube uploads?",
+                options: [
+                    "720p (1280x720)",
+                    "1080p (1920x1080)",
+                    "480p (854x480)",
+                    "4K (3840x2160)"
+                ],
+                correct: 1,
+                explanation: "1080p (1920x1080) is the standard HD resolution for YouTube. It provides good quality while keeping file sizes manageable."
+            },
+            {
+                question: "When your background footage is shorter than your voiceover, what should you do?",
+                options: [
+                    "Speed up the voiceover",
+                    "Cut the voiceover short",
+                    "Loop the footage",
+                    "Add black screens"
+                ],
+                correct: 2,
+                explanation: "Looping the footage is the best approach. The automation scripts handle this automatically by repeating video clips until they match the audio duration."
+            },
+            {
+                question: "What is the recommended background music volume relative to voiceover?",
+                options: [
+                    "50% of voiceover volume",
+                    "Same as voiceover",
+                    "10-15% of voiceover volume",
+                    "75% of voiceover volume"
+                ],
+                correct: 2,
+                explanation: "Background music should be at 10-15% volume to enhance the video without overpowering the voiceover. The voiceover must always be clearly audible."
+            },
+            {
+                question: "What video codec is recommended for YouTube uploads?",
+                options: [
+                    "MPEG-2",
+                    "H.264 (libx264)",
+                    "VP9",
+                    "ProRes"
+                ],
+                correct: 1,
+                explanation: "H.264 (libx264) is the most widely compatible codec and is recommended by YouTube. It provides good quality with reasonable file sizes."
+            },
+            {
+                question: "What is the purpose of fade in/out effects on background music?",
+                options: [
+                    "To make the video longer",
+                    "To create smooth transitions and avoid abrupt starts/ends",
+                    "To increase volume",
+                    "To add special effects"
+                ],
+                correct: 1,
+                explanation: "Fade in/out effects create smooth transitions at the beginning and end of the video, avoiding jarring audio cuts that can seem unprofessional."
+            },
+            {
+                question: "Which free source provides royalty-free background music for YouTube videos?",
+                options: [
+                    "Spotify",
+                    "Apple Music",
+                    "YouTube Audio Library",
+                    "SoundCloud"
+                ],
+                correct: 2,
+                explanation: "YouTube Audio Library provides free, royalty-free music specifically for use in YouTube videos. It's accessible directly from YouTube Studio."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = questions.map((q, index) => `
+                <div class="question-card ${index === 0 ? 'active' : ''}" id="question-${index}">
+                    <div class="question-number">Question ${index + 1} of ${questions.length}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((opt, i) => `
+                            <div class="option" onclick="selectOption(${index}, ${i})">${opt}</div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${index}">${q.explanation}</div>
+                    <button class="btn" id="btn-${index}" onclick="nextQuestion()" disabled>Next Question</button>
+                </div>
+            `).join('');
+            updateProgress();
+        }
+
+        function selectOption(questionIndex, optionIndex) {
+            if (answered) return;
+            answered = true;
+
+            const question = questions[questionIndex];
+            const options = document.querySelectorAll(`#question-${questionIndex} .option`);
+            
+            options[optionIndex].classList.add('selected');
+            
+            if (optionIndex === question.correct) {
+                options[optionIndex].classList.add('correct');
+                score++;
+            } else {
+                options[optionIndex].classList.add('incorrect');
+                options[question.correct].classList.add('correct');
+            }
+
+            document.getElementById(`explanation-${questionIndex}`).style.display = 'block';
+            document.getElementById(`btn-${questionIndex}`).disabled = false;
+        }
+
+        function nextQuestion() {
+            answered = false;
+            document.getElementById(`question-${currentQuestion}`).classList.remove('active');
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                document.getElementById(`question-${currentQuestion}`).classList.add('active');
+                updateProgress();
+            } else {
+                showResults();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('score').textContent = `${percentage}%`;
+            
+            let message = '';
+            if (percentage >= 80) {
+                message = 'Excellent! You have mastered video editing concepts!';
+            } else if (percentage >= 60) {
+                message = 'Good job! Review the module for areas you missed.';
+            } else {
+                message = 'Keep learning! Review Module 6 and try again.';
+            }
+            document.getElementById('score-text').textContent = message;
+            
+            document.getElementById('progress').style.width = '100%';
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            answered = false;
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            renderQuiz();
+        }
+
+        renderQuiz();
+    </script>
+</body>
+</html>

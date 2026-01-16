@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 8 Quiz: SEO and Optimization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #a29bfe;
+        }
+        .progress-bar {
+            background: #2a2a4a;
+            border-radius: 10px;
+            height: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress {
+            background: linear-gradient(90deg, #a29bfe, #fd79a8);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .question-card {
+            background: #2a2a4a;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .question-card.active {
+            display: block;
+        }
+        .question-number {
+            color: #a29bfe;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-size: 20px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option {
+            background: #1a1a2e;
+            border: 2px solid #3a3a5a;
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .option:hover {
+            border-color: #a29bfe;
+            transform: translateX(5px);
+        }
+        .option.selected {
+            border-color: #a29bfe;
+            background: rgba(162, 155, 254, 0.1);
+        }
+        .option.correct {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.2);
+        }
+        .option.incorrect {
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.2);
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            border-left: 4px solid #a29bfe;
+            display: none;
+        }
+        .btn {
+            background: linear-gradient(90deg, #a29bfe, #fd79a8);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .results {
+            text-align: center;
+            display: none;
+        }
+        .score {
+            font-size: 72px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #a29bfe, #fd79a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-text {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 8: SEO Quiz</h1>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="quiz-container"></div>
+        
+        <div class="results" id="results">
+            <div class="score" id="score">0%</div>
+            <div class="score-text" id="score-text"></div>
+            <button class="btn" onclick="restartQuiz()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "What does CTR stand for in YouTube analytics?",
+                options: [
+                    "Content To Revenue",
+                    "Click-Through Rate",
+                    "Channel Traffic Report",
+                    "Creator Tool Rating"
+                ],
+                correct: 1,
+                explanation: "CTR (Click-Through Rate) is the percentage of impressions that resulted in a view. It measures how effective your thumbnail and title are at getting clicks."
+            },
+            {
+                question: "Where should your primary keyword appear in your video title?",
+                options: [
+                    "At the end",
+                    "In the middle",
+                    "At the beginning",
+                    "It doesn't matter"
+                ],
+                correct: 2,
+                explanation: "Your primary keyword should appear at the beginning of your title. This helps with search rankings and ensures the keyword is visible even if the title gets truncated."
+            },
+            {
+                question: "What is the maximum recommended length for a YouTube title?",
+                options: [
+                    "100 characters",
+                    "60 characters",
+                    "80 characters",
+                    "40 characters"
+                ],
+                correct: 1,
+                explanation: "Keep titles under 60 characters to ensure they're fully visible in search results and don't get cut off on different devices."
+            },
+            {
+                question: "What is a good Click-Through Rate (CTR) for YouTube videos?",
+                options: [
+                    "1-2%",
+                    "5-10%",
+                    "15-20%",
+                    "25-30%"
+                ],
+                correct: 1,
+                explanation: "A CTR of 5-10% is considered good for YouTube. The average is 2-10%, and anything above 10% is excellent."
+            },
+            {
+                question: "What is the recommended thumbnail size for YouTube?",
+                options: [
+                    "1920 x 1080 pixels",
+                    "1280 x 720 pixels",
+                    "800 x 600 pixels",
+                    "640 x 480 pixels"
+                ],
+                correct: 1,
+                explanation: "YouTube recommends thumbnails of 1280 x 720 pixels (16:9 aspect ratio). This ensures your thumbnail looks good on all devices."
+            },
+            {
+                question: "What is the maximum total character limit for YouTube tags?",
+                options: [
+                    "200 characters",
+                    "500 characters",
+                    "1000 characters",
+                    "No limit"
+                ],
+                correct: 1,
+                explanation: "YouTube allows a maximum of 500 characters total for all tags combined. Use a mix of broad and specific tags."
+            },
+            {
+                question: "Which part of the description is visible before clicking 'Show more'?",
+                options: [
+                    "First 100 characters",
+                    "First 2-3 lines (about 150-200 characters)",
+                    "First 500 characters",
+                    "The entire description"
+                ],
+                correct: 1,
+                explanation: "Only the first 2-3 lines (approximately 150-200 characters) are visible before viewers click 'Show more'. Make these lines compelling!"
+            },
+            {
+                question: "What free browser extension helps with YouTube keyword research?",
+                options: [
+                    "Grammarly",
+                    "VidIQ or TubeBuddy",
+                    "LastPass",
+                    "Honey"
+                ],
+                correct: 1,
+                explanation: "VidIQ and TubeBuddy are free browser extensions that help with keyword research, showing search volume, competition, and optimization suggestions."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = questions.map((q, index) => `
+                <div class="question-card ${index === 0 ? 'active' : ''}" id="question-${index}">
+                    <div class="question-number">Question ${index + 1} of ${questions.length}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((opt, i) => `
+                            <div class="option" onclick="selectOption(${index}, ${i})">${opt}</div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${index}">${q.explanation}</div>
+                    <button class="btn" id="btn-${index}" onclick="nextQuestion()" disabled>Next Question</button>
+                </div>
+            `).join('');
+            updateProgress();
+        }
+
+        function selectOption(questionIndex, optionIndex) {
+            if (answered) return;
+            answered = true;
+
+            const question = questions[questionIndex];
+            const options = document.querySelectorAll(`#question-${questionIndex} .option`);
+            
+            options[optionIndex].classList.add('selected');
+            
+            if (optionIndex === question.correct) {
+                options[optionIndex].classList.add('correct');
+                score++;
+            } else {
+                options[optionIndex].classList.add('incorrect');
+                options[question.correct].classList.add('correct');
+            }
+
+            document.getElementById(`explanation-${questionIndex}`).style.display = 'block';
+            document.getElementById(`btn-${questionIndex}`).disabled = false;
+        }
+
+        function nextQuestion() {
+            answered = false;
+            document.getElementById(`question-${currentQuestion}`).classList.remove('active');
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                document.getElementById(`question-${currentQuestion}`).classList.add('active');
+                updateProgress();
+            } else {
+                showResults();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('score').textContent = `${percentage}%`;
+            
+            let message = '';
+            if (percentage >= 80) {
+                message = 'Excellent! You understand YouTube SEO!';
+            } else if (percentage >= 60) {
+                message = 'Good job! Review the module for areas you missed.';
+            } else {
+                message = 'Keep learning! Review Module 8 and try again.';
+            }
+            document.getElementById('score-text').textContent = message;
+            
+            document.getElementById('progress').style.width = '100%';
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            answered = false;
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            renderQuiz();
+        }
+
+        renderQuiz();
+    </script>
+</body>
+</html>
