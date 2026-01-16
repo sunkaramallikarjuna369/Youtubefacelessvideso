@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faceless YouTube Niche Selector Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            color: #feca57;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .question-group {
+            margin-bottom: 25px;
+        }
+        .question-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #e0e0e0;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .option-btn {
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .option-btn:hover {
+            border-color: #feca57;
+            background: rgba(254, 202, 87, 0.1);
+        }
+        .option-btn.selected {
+            border-color: #feca57;
+            background: rgba(254, 202, 87, 0.2);
+        }
+        .slider-container {
+            margin-top: 10px;
+        }
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            cursor: pointer;
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #888;
+        }
+        .btn-analyze {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            border: none;
+            border-radius: 15px;
+            color: #1a1a2e;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .btn-analyze:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(254, 202, 87, 0.3);
+        }
+        .results {
+            display: none;
+        }
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .niche-result {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        .niche-result.tier1 { border-color: #4CAF50; }
+        .niche-result.tier2 { border-color: #2196F3; }
+        .niche-result.tier3 { border-color: #FF9800; }
+        .niche-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .niche-score {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .tier1 .niche-score { background: rgba(76, 175, 80, 0.3); color: #81c784; }
+        .tier2 .niche-score { background: rgba(33, 150, 243, 0.3); color: #64b5f6; }
+        .tier3 .niche-score { background: rgba(255, 152, 0, 0.3); color: #ffb74d; }
+        .niche-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .detail-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .detail-label {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #feca57;
+        }
+        .niche-description {
+            color: #b0b0b0;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+        .tips-section {
+            background: rgba(254, 202, 87, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        .tips-section h3 {
+            color: #feca57;
+            margin-bottom: 15px;
+        }
+        .tips-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .tips-section li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-left: 25px;
+            position: relative;
+        }
+        .tips-section li:before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #feca57;
+        }
+        .tips-section li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Niche Selector Tool</h1>
+        <p class="subtitle">Find your perfect faceless YouTube niche based on your interests and goals</p>
+
+        <div id="questionnaire">
+            <div class="card">
+                <h2>Step 1: Your Interests</h2>
+                <div class="question-group">
+                    <label>What topics are you passionate about? (Select all that apply)</label>
+                    <div class="options-grid" id="interests">
+                        <button class="option-btn" data-value="finance">Money & Finance</button>
+                        <button class="option-btn" data-value="tech">Technology</button>
+                        <button class="option-btn" data-value="health">Health & Fitness</button>
+                        <button class="option-btn" data-value="education">Education</button>
+                        <button class="option-btn" data-value="entertainment">Entertainment</button>
+                        <button class="option-btn" data-value="gaming">Gaming</button>
+                        <button class="option-btn" data-value="motivation">Self-Improvement</button>
+                        <button class="option-btn" data-value="stories">Stories & Mysteries</button>
+                        <button class="option-btn" data-value="nature">Nature & Animals</button>
+                        <button class="option-btn" data-value="business">Business</button>
+                        <button class="option-btn" data-value="science">Science</button>
+                        <button class="option-btn" data-value="history">History</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Step 2: Your Goals</h2>
+                <div class="question-group">
+                    <label>What's your primary goal?</label>
+                    <div class="options-grid" id="goals">
+                        <button class="option-btn" data-value="money">Maximum earnings</button>
+                        <button class="option-btn" data-value="passion">Share my passion</button>
+                        <button class="option-btn" data-value="balance">Balance of both</button>
+                        <button class="option-btn" data-value="growth">Fast channel growth</button>
+                    </div>
+                </div>
+                <div class="question-group">
+                    <label>How much time can you dedicate weekly?</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="time-slider" min="1" max="5" value="3">
+                        <div class="slider-labels">
+                            <span>2-5 hrs</span>
+                            <span>5-10 hrs</span>
+                            <span>10-15 hrs</span>
+                            <span>15-20 hrs</span>
+                            <span>20+ hrs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Step 3: Your Resources</h2>
+                <div class="question-group">
+                    <label>What's your budget for tools? (Monthly)</label>
+                    <div class="options-grid" id="budget">
+                        <button class="option-btn" data-value="free">$0 - Free only</button>
+                        <button class="option-btn" data-value="low">$1-20</button>
+                        <button class="option-btn" data-value="medium">$20-50</button>
+                        <button class="option-btn" data-value="high">$50+</button>
+                    </div>
+                </div>
+                <div class="question-group">
+                    <label>Your content creation experience?</label>
+                    <div class="options-grid" id="experience">
+                        <button class="option-btn" data-value="none">Complete beginner</button>
+                        <button class="option-btn" data-value="some">Some experience</button>
+                        <button class="option-btn" data-value="experienced">Experienced creator</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-analyze" onclick="analyzeNiche()">Find My Perfect Niche</button>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <h2>Your Recommended Niches</h2>
+                <div id="niche-results"></div>
+            </div>
+
+            <div class="tips-section">
+                <h3>Getting Started Tips</h3>
+                <ul id="tips-list"></ul>
+            </div>
+
+            <button class="btn-analyze" onclick="resetForm()" style="margin-top: 20px;">Try Different Options</button>
+        </div>
+    </div>
+
+    <script>
+        const niches = {
+            finance: {
+                name: "Finance & Investing",
+                cpm: "$15-50",
+                competition: "High",
+                difficulty: "Medium",
+                growthPotential: "High",
+                description: "Cover topics like stock market analysis, cryptocurrency, personal finance tips, budgeting, and investment strategies. High CPM but requires accurate information.",
+                subniches: ["Stock market analysis", "Crypto explained", "Personal finance tips", "Real estate investing", "Passive income ideas"],
+                tools: ["TradingView for charts", "Yahoo Finance for data", "Edge TTS for voiceover"]
+            },
+            tech: {
+                name: "Technology & Software",
+                cpm: "$10-30",
+                competition: "High",
+                difficulty: "Medium",
+                growthPotential: "High",
+                description: "Review software, explain tech concepts, cover AI tools, and create tutorials. Great for automation as content is evergreen.",
+                subniches: ["AI tool reviews", "Software tutorials", "Tech news", "Gadget comparisons", "Coding tutorials"],
+                tools: ["Screen recording software", "Canva for thumbnails", "Edge TTS for voiceover"]
+            },
+            health: {
+                name: "Health & Wellness",
+                cpm: "$8-20",
+                competition: "Medium",
+                difficulty: "Medium",
+                growthPotential: "Medium",
+                description: "Share fitness routines, nutrition advice, mental health tips, and wellness content. Be careful with medical claims.",
+                subniches: ["Home workouts", "Nutrition tips", "Mental health", "Sleep improvement", "Meditation guides"],
+                tools: ["Pexels for stock footage", "Canva for graphics", "Edge TTS for voiceover"]
+            },
+            education: {
+                name: "Educational Content",
+                cpm: "$8-15",
+                competition: "Medium",
+                difficulty: "Medium",
+                growthPotential: "High",
+                description: "Explain complex topics simply, create study guides, and educational content. Evergreen content with long-term views.",
+                subniches: ["Science explained", "Math tutorials", "Language learning", "Study tips", "Documentary style"],
+                tools: ["Manim for animations", "Canva for visuals", "Edge TTS for voiceover"]
+            },
+            entertainment: {
+                name: "Entertainment & Pop Culture",
+                cpm: "$3-8",
+                competition: "Very High",
+                difficulty: "Low",
+                growthPotential: "High",
+                description: "Movie recaps, celebrity news, TV show analysis. Lower CPM but high view potential. Easy to create.",
+                subniches: ["Movie recaps", "TV show theories", "Celebrity stories", "Pop culture news", "Ranking videos"],
+                tools: ["Pexels for b-roll", "Canva for thumbnails", "Edge TTS for voiceover"]
+            },
+            gaming: {
+                name: "Gaming Content",
+                cpm: "$2-8",
+                competition: "Very High",
+                difficulty: "Low",
+                growthPotential: "Medium",
+                description: "Game reviews, lore explanations, tips and tricks. Passionate audience but lower CPM.",
+                subniches: ["Game lore explained", "Top 10 gaming lists", "Game reviews", "Gaming news", "Tips and tricks"],
+                tools: ["OBS for recording", "DaVinci Resolve for editing", "Edge TTS for voiceover"]
+            },
+            motivation: {
+                name: "Motivation & Self-Improvement",
+                cpm: "$5-15",
+                competition: "Medium",
+                difficulty: "Low",
+                growthPotential: "Medium",
+                description: "Motivational speeches, success stories, productivity tips. Easy to create with stock footage and quotes.",
+                subniches: ["Motivational compilations", "Success stories", "Productivity tips", "Habit building", "Mindset content"],
+                tools: ["Pexels for cinematic footage", "Canva for quotes", "Edge TTS for voiceover"]
+            },
+            stories: {
+                name: "Stories & Mysteries",
+                cpm: "$4-12",
+                competition: "Medium",
+                difficulty: "Medium",
+                growthPotential: "High",
+                description: "True crime, unsolved mysteries, scary stories. High engagement and watch time. Great for storytelling.",
+                subniches: ["True crime", "Unsolved mysteries", "Scary stories", "Historical mysteries", "Conspiracy theories"],
+                tools: ["Pexels for atmospheric footage", "Audacity for audio effects", "Edge TTS for voiceover"]
+            },
+            nature: {
+                name: "Nature & Animals",
+                cpm: "$2-6",
+                competition: "Medium",
+                difficulty: "Low",
+                growthPotential: "Medium",
+                description: "Wildlife documentaries, animal facts, nature compilations. Relaxing content with broad appeal.",
+                subniches: ["Animal facts", "Nature documentaries", "Pet compilations", "Ocean life", "Wildlife"],
+                tools: ["Pexels/Pixabay for footage", "Relaxing music libraries", "Edge TTS for voiceover"]
+            },
+            business: {
+                name: "Business & Entrepreneurship",
+                cpm: "$15-40",
+                competition: "High",
+                difficulty: "Medium",
+                growthPotential: "High",
+                description: "Business ideas, startup advice, marketing strategies. High CPM with professional audience.",
+                subniches: ["Business ideas", "Side hustle guides", "Marketing tips", "Startup stories", "E-commerce"],
+                tools: ["Canva for presentations", "Stock footage sites", "Edge TTS for voiceover"]
+            },
+            science: {
+                name: "Science & Space",
+                cpm: "$6-15",
+                competition: "Medium",
+                difficulty: "High",
+                growthPotential: "High",
+                description: "Space exploration, scientific discoveries, physics explained. Requires research but highly engaging.",
+                subniches: ["Space exploration", "Physics explained", "Biology facts", "Chemistry experiments", "Future technology"],
+                tools: ["NASA free footage", "Manim for animations", "Edge TTS for voiceover"]
+            },
+            history: {
+                name: "History & Documentaries",
+                cpm: "$5-12",
+                competition: "Medium",
+                difficulty: "Medium",
+                growthPotential: "Medium",
+                description: "Historical events, biographies, ancient civilizations. Evergreen content with educational value.",
+                subniches: ["Ancient history", "War documentaries", "Famous people bios", "Historical mysteries", "Civilization stories"],
+                tools: ["Archive.org for footage", "Wikipedia for research", "Edge TTS for voiceover"]
+            }
+        };
+
+        let selectedInterests = [];
+        let selectedGoal = null;
+        let selectedBudget = null;
+        let selectedExperience = null;
+
+        // Handle interest selection (multiple)
+        document.querySelectorAll('#interests .option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                const value = this.dataset.value;
+                if (selectedInterests.includes(value)) {
+                    selectedInterests = selectedInterests.filter(i => i !== value);
+                } else {
+                    selectedInterests.push(value);
+                }
+            });
+        });
+
+        // Handle single selection groups
+        ['goals', 'budget', 'experience'].forEach(groupId => {
+            document.querySelectorAll(`#${groupId} .option-btn`).forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll(`#${groupId} .option-btn`).forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    if (groupId === 'goals') selectedGoal = this.dataset.value;
+                    if (groupId === 'budget') selectedBudget = this.dataset.value;
+                    if (groupId === 'experience') selectedExperience = this.dataset.value;
+                });
+            });
+        });
+
+        function analyzeNiche() {
+            if (selectedInterests.length === 0) {
+                alert('Please select at least one interest!');
+                return;
+            }
+
+            const timeValue = document.getElementById('time-slider').value;
+            
+            // Score each niche based on selections
+            let nicheScores = [];
+            
+            selectedInterests.forEach(interest => {
+                if (niches[interest]) {
+                    let score = 50; // Base score
+                    
+                    // Adjust for goal
+                    if (selectedGoal === 'money') {
+                        const cpmMax = parseInt(niches[interest].cpm.split('-')[1]);
+                        score += cpmMax * 2;
+                    } else if (selectedGoal === 'growth') {
+                        if (niches[interest].growthPotential === 'High') score += 30;
+                        else if (niches[interest].growthPotential === 'Medium') score += 15;
+                    } else if (selectedGoal === 'passion') {
+                        score += 20; // All passions are valid
+                    }
+                    
+                    // Adjust for experience
+                    if (selectedExperience === 'none' && niches[interest].difficulty === 'Low') score += 20;
+                    if (selectedExperience === 'experienced' && niches[interest].difficulty === 'High') score += 15;
+                    
+                    // Adjust for time
+                    if (timeValue >= 4 && niches[interest].competition === 'High') score += 10;
+                    
+                    nicheScores.push({
+                        key: interest,
+                        ...niches[interest],
+                        score: score
+                    });
+                }
+            });
+            
+            // Sort by score
+            nicheScores.sort((a, b) => b.score - a.score);
+            
+            // Display results
+            displayResults(nicheScores);
+        }
+
+        function displayResults(nicheScores) {
+            document.getElementById('questionnaire').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+            
+            const resultsContainer = document.getElementById('niche-results');
+            resultsContainer.innerHTML = '';
+            
+            nicheScores.forEach((niche, index) => {
+                const tier = index === 0 ? 'tier1' : (index === 1 ? 'tier2' : 'tier3');
+                const tierLabel = index === 0 ? 'Best Match' : (index === 1 ? 'Great Option' : 'Good Alternative');
+                
+                resultsContainer.innerHTML += `
+                    <div class="niche-result ${tier}">
+                        <div class="niche-name">${niche.name}</div>
+                        <span class="niche-score">${tierLabel} - Score: ${niche.score}</span>
+                        <div class="niche-details">
+                            <div class="detail-item">
+                                <div class="detail-label">CPM Range</div>
+                                <div class="detail-value">${niche.cpm}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Competition</div>
+                                <div class="detail-value">${niche.competition}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Difficulty</div>
+                                <div class="detail-value">${niche.difficulty}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Growth</div>
+                                <div class="detail-value">${niche.growthPotential}</div>
+                            </div>
+                        </div>
+                        <p class="niche-description">${niche.description}</p>
+                        <p class="niche-description"><strong>Sub-niches to explore:</strong> ${niche.subniches.join(', ')}</p>
+                        <p class="niche-description"><strong>Recommended tools:</strong> ${niche.tools.join(', ')}</p>
+                    </div>
+                `;
+            });
+            
+            // Generate tips
+            const tipsList = document.getElementById('tips-list');
+            const tips = [
+                `Start with ${nicheScores[0].name} as your primary focus`,
+                `Create a content calendar with 3-5 videos per week`,
+                `Use the automation scripts in Module 9 to speed up production`,
+                `Study top channels in your niche using Social Blade`,
+                `Focus on watch time - aim for 8+ minute videos`,
+                `Optimize thumbnails and titles for CTR (Click-Through Rate)`,
+                `Reinvest early earnings into better tools as you grow`
+            ];
+            
+            tipsList.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
+        }
+
+        function resetForm() {
+            document.getElementById('questionnaire').style.display = 'block';
+            document.getElementById('results').classList.remove('show');
+            
+            // Reset selections
+            selectedInterests = [];
+            selectedGoal = null;
+            selectedBudget = null;
+            selectedExperience = null;
+            
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('time-slider').value = 3;
+        }
+    </script>
+</body>
+</html>

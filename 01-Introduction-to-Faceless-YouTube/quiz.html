@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 1 Quiz: Introduction to Faceless YouTube</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        .question-container {
+            display: none;
+        }
+        .question-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .question-number {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .option {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+        }
+        .option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        .option.correct {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        .option.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        .feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+        }
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .feedback.correct {
+            background: #e8f5e9;
+            border: 1px solid #4CAF50;
+            color: #2e7d32;
+        }
+        .feedback.incorrect {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 25px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-container {
+            text-align: center;
+        }
+        .results {
+            text-align: center;
+            display: none;
+        }
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px auto;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        }
+        .score-inner {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .score-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .score-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .result-message {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .result-details {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        .explanation {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.95em;
+            color: #555;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 1 Quiz</h1>
+        <p class="subtitle">Introduction to Faceless YouTube Videos</p>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress" style="width: 0%"></div>
+        </div>
+
+        <div id="quiz-container">
+            <!-- Question 1 -->
+            <div class="question-container active" data-question="1">
+                <p class="question-number">Question 1 of 10</p>
+                <p class="question">What is the primary characteristic of a "faceless" YouTube channel?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">The channel has no profile picture</div>
+                    <div class="option" data-answer="b">The creator never shows their face on camera</div>
+                    <div class="option" data-answer="c">The videos have no thumbnails</div>
+                    <div class="option" data-answer="d">The channel is anonymous with no name</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(1, 'b')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="question-container" data-question="2">
+                <p class="question-number">Question 2 of 10</p>
+                <p class="question">What are the requirements to join the YouTube Partner Program for ad revenue?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">500 subscribers and 2,000 watch hours</div>
+                    <div class="option" data-answer="b">1,000 subscribers and 4,000 watch hours</div>
+                    <div class="option" data-answer="c">5,000 subscribers and 10,000 watch hours</div>
+                    <div class="option" data-answer="d">10,000 subscribers and 20,000 watch hours</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(2, 'b')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="question-container" data-question="3">
+                <p class="question-number">Question 3 of 10</p>
+                <p class="question">Which niche typically has the HIGHEST CPM (Cost Per Mille)?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Gaming compilations</div>
+                    <div class="option" data-answer="b">ASMR videos</div>
+                    <div class="option" data-answer="c">Finance and investing</div>
+                    <div class="option" data-answer="d">Pet videos</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(3, 'c')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="question-container" data-question="4">
+                <p class="question-number">Question 4 of 10</p>
+                <p class="question">What does CPM stand for in YouTube monetization?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Cost Per Month</div>
+                    <div class="option" data-answer="b">Clicks Per Minute</div>
+                    <div class="option" data-answer="c">Cost Per Mille (thousand views)</div>
+                    <div class="option" data-answer="d">Content Performance Metric</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(4, 'c')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="question-container" data-question="5">
+                <p class="question-number">Question 5 of 10</p>
+                <p class="question">Which of the following is NOT a common revenue stream for faceless YouTube channels?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">YouTube AdSense</div>
+                    <div class="option" data-answer="b">Affiliate marketing</div>
+                    <div class="option" data-answer="c">Selling physical merchandise at local stores</div>
+                    <div class="option" data-answer="d">Sponsorships</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(5, 'c')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 6 -->
+            <div class="question-container" data-question="6">
+                <p class="question-number">Question 6 of 10</p>
+                <p class="question">What is a realistic timeline to reach YouTube monetization for a consistent creator?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">1-2 weeks</div>
+                    <div class="option" data-answer="b">4-6 months</div>
+                    <div class="option" data-answer="c">2-3 years minimum</div>
+                    <div class="option" data-answer="d">It's impossible without showing your face</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(6, 'b')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 7 -->
+            <div class="question-container" data-question="7">
+                <p class="question-number">Question 7 of 10</p>
+                <p class="question">Which free tool can be used for AI voice generation in faceless videos?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Adobe Premiere Pro</div>
+                    <div class="option" data-answer="b">Edge TTS</div>
+                    <div class="option" data-answer="c">Final Cut Pro</div>
+                    <div class="option" data-answer="d">Photoshop</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(7, 'b')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 8 -->
+            <div class="question-container" data-question="8">
+                <p class="question-number">Question 8 of 10</p>
+                <p class="question">What is the main advantage of faceless YouTube channels for side hustles?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">They always go viral immediately</div>
+                    <div class="option" data-answer="b">They require no effort at all</div>
+                    <div class="option" data-answer="c">Content creation can be automated and done without expensive equipment</div>
+                    <div class="option" data-answer="d">YouTube pays faceless channels more money</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(8, 'c')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 9 -->
+            <div class="question-container" data-question="9">
+                <p class="question-number">Question 9 of 10</p>
+                <p class="question">Which website provides free stock footage for faceless videos?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Netflix</div>
+                    <div class="option" data-answer="b">Pexels</div>
+                    <div class="option" data-answer="c">Instagram</div>
+                    <div class="option" data-answer="d">TikTok</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(9, 'b')" disabled>Check Answer</button>
+                </div>
+            </div>
+
+            <!-- Question 10 -->
+            <div class="question-container" data-question="10">
+                <p class="question-number">Question 10 of 10</p>
+                <p class="question">What is more important than perfection when starting a faceless YouTube channel?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Having the most expensive equipment</div>
+                    <div class="option" data-answer="b">Consistency in uploading content</div>
+                    <div class="option" data-answer="c">Copying exactly what other channels do</div>
+                    <div class="option" data-answer="d">Waiting until you have the perfect idea</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container">
+                    <button class="btn" onclick="checkAnswer(10, 'b')" disabled>Check Answer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results">
+            <div class="score-circle">
+                <div class="score-inner">
+                    <span class="score-number" id="score-number">0</span>
+                    <span class="score-label">out of 10</span>
+                </div>
+            </div>
+            <p class="result-message" id="result-message"></p>
+            <p class="result-details" id="result-details"></p>
+            <button class="btn" onclick="restartQuiz()">Try Again</button>
+            <button class="btn" onclick="window.location.href='../02-Niche-Selection-and-Research/README.md'" style="margin-left: 10px;">Next Module</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        let score = 0;
+        let answered = new Set();
+
+        const explanations = {
+            1: "Faceless YouTube channels are defined by the creator not appearing on camera. They use voiceovers, stock footage, animations, or AI-generated content instead.",
+            2: "YouTube requires 1,000 subscribers and 4,000 watch hours in the past 12 months to join the Partner Program. Alternatively, you can qualify with 10 million Shorts views in 90 days.",
+            3: "Finance and investing niches typically have the highest CPM ($15-50+) because advertisers in this space pay premium rates to reach audiences interested in financial products.",
+            4: "CPM stands for Cost Per Mille, which is Latin for 'thousand'. It represents how much advertisers pay per 1,000 ad impressions on your videos.",
+            5: "While faceless channels can sell merchandise online, selling at local physical stores is not a common or practical revenue stream for YouTube creators.",
+            6: "With consistent uploading (3-5 videos per week), most creators can reach monetization requirements within 4-6 months. Some achieve it faster with viral content.",
+            7: "Edge TTS (Text-to-Speech) is a free Microsoft tool that provides high-quality AI voices. It's one of the best free alternatives to paid services like ElevenLabs.",
+            8: "Faceless channels can be largely automated using AI tools, don't require expensive camera equipment, and can be created on your own schedule without worrying about appearance.",
+            9: "Pexels is a free stock footage and image website that provides royalty-free content perfect for faceless YouTube videos. Pixabay is another excellent free option.",
+            10: "Consistency is the key to YouTube success. Regular uploads help the algorithm promote your content and build audience expectations. Perfect videos that never get published earn nothing."
+        };
+
+        // Add click handlers to all options
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const container = this.closest('.question-container');
+                const questionNum = parseInt(container.dataset.question);
+                
+                if (answered.has(questionNum)) return;
+                
+                container.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                container.querySelector('.btn').disabled = false;
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            if (answered.has(questionNum)) return;
+            
+            const container = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = container.querySelector('.option.selected');
+            
+            if (!selected) return;
+            
+            answered.add(questionNum);
+            const userAnswer = selected.dataset.answer;
+            const feedback = container.querySelector('.feedback');
+            
+            container.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) {
+                    opt.classList.add('correct');
+                }
+            });
+            
+            if (userAnswer === correctAnswer) {
+                score++;
+                selected.classList.add('correct');
+                feedback.className = 'feedback show correct';
+                feedback.innerHTML = `<strong>Correct!</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            } else {
+                selected.classList.add('incorrect');
+                feedback.className = 'feedback show incorrect';
+                feedback.innerHTML = `<strong>Incorrect.</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            }
+            
+            const btn = container.querySelector('.btn');
+            if (questionNum < 10) {
+                btn.textContent = 'Next Question';
+                btn.onclick = () => nextQuestion(questionNum + 1);
+            } else {
+                btn.textContent = 'See Results';
+                btn.onclick = showResults;
+            }
+            btn.disabled = false;
+            
+            updateProgress();
+        }
+
+        function nextQuestion(num) {
+            document.querySelector(`[data-question="${currentQuestion}"]`).classList.remove('active');
+            document.querySelector(`[data-question="${num}"]`).classList.add('active');
+            currentQuestion = num;
+        }
+
+        function updateProgress() {
+            const progress = (answered.size / 10) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+            document.getElementById('score-number').textContent = score;
+            
+            let message, details;
+            if (score === 10) {
+                message = "Perfect Score! Outstanding!";
+                details = "You have an excellent understanding of faceless YouTube fundamentals. You're ready to move on to niche selection!";
+            } else if (score >= 8) {
+                message = "Great Job!";
+                details = "You have a solid grasp of the basics. Review the questions you missed and proceed to the next module.";
+            } else if (score >= 6) {
+                message = "Good Effort!";
+                details = "You understand the core concepts. Consider reviewing the README before moving forward.";
+            } else if (score >= 4) {
+                message = "Keep Learning!";
+                details = "Review Module 1 materials again to strengthen your foundation before proceeding.";
+            } else {
+                message = "More Study Needed";
+                details = "Please re-read the Module 1 README carefully and try the quiz again.";
+            }
+            
+            document.getElementById('result-message').textContent = message;
+            document.getElementById('result-details').textContent = details;
+        }
+
+        function restartQuiz() {
+            score = 0;
+            currentQuestion = 1;
+            answered.clear();
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.style.pointerEvents = 'auto';
+            });
+            
+            document.querySelectorAll('.feedback').forEach(fb => {
+                fb.className = 'feedback';
+                fb.innerHTML = '';
+            });
+            
+            document.querySelectorAll('.question-container').forEach((container, index) => {
+                container.classList.remove('active');
+                if (index === 0) container.classList.add('active');
+                const btn = container.querySelector('.btn');
+                btn.textContent = 'Check Answer';
+                btn.disabled = true;
+                btn.onclick = () => checkAnswer(index + 1, ['b', 'b', 'c', 'c', 'c', 'b', 'b', 'c', 'b', 'b'][index]);
+            });
+            
+            document.getElementById('progress').style.width = '0%';
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('quiz-container').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 3 Quiz: Content Research & Script Writing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 2em; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 5px; margin-bottom: 30px; overflow: hidden; }
+        .progress { height: 100%; background: linear-gradient(90deg, #f093fb, #f5576c); border-radius: 5px; transition: width 0.5s ease; }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .question-number { color: #f5576c; font-size: 0.9em; margin-bottom: 10px; }
+        .question { font-size: 1.3em; color: #333; margin-bottom: 25px; line-height: 1.5; }
+        .options { display: flex; flex-direction: column; gap: 15px; }
+        .option { padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; font-size: 1em; }
+        .option:hover { border-color: #f5576c; background: #fff5f6; }
+        .option.selected { border-color: #f5576c; background: #fff0f2; }
+        .option.correct { border-color: #4CAF50; background: #e8f5e9; }
+        .option.incorrect { border-color: #f44336; background: #ffebee; }
+        .feedback { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; }
+        .feedback.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback.correct { background: #e8f5e9; border: 1px solid #4CAF50; color: #2e7d32; }
+        .feedback.incorrect { background: #ffebee; border: 1px solid #f44336; color: #c62828; }
+        .btn { display: inline-block; padding: 15px 40px; background: linear-gradient(90deg, #f093fb, #f5576c); color: white; border: none; border-radius: 30px; font-size: 1em; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; margin-top: 25px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-container { text-align: center; }
+        .results { text-align: center; display: none; }
+        .results.show { display: block; animation: fadeIn 0.5s ease; }
+        .score-circle { width: 200px; height: 200px; border-radius: 50%; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center; margin: 30px auto; box-shadow: 0 10px 40px rgba(245, 87, 108, 0.4); }
+        .score-inner { width: 160px; height: 160px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-number { font-size: 3em; font-weight: bold; color: #f5576c; }
+        .score-label { color: #666; font-size: 0.9em; }
+        .result-message { font-size: 1.5em; color: #333; margin-bottom: 20px; }
+        .result-details { color: #666; margin-bottom: 30px; line-height: 1.8; }
+        .explanation { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 0.95em; color: #555; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Module 3 Quiz</h1>
+        <p class="subtitle">Content Research & Script Writing with AI</p>
+        <div class="progress-bar"><div class="progress" id="progress" style="width: 0%"></div></div>
+
+        <div id="quiz-container">
+            <div class="question-container active" data-question="1">
+                <p class="question-number">Question 1 of 8</p>
+                <p class="question">What is the purpose of a "hook" in a YouTube script?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">To add background music</div>
+                    <div class="option" data-answer="b">To grab viewer attention in the first 30 seconds and prevent them from leaving</div>
+                    <div class="option" data-answer="c">To promote your other videos</div>
+                    <div class="option" data-answer="d">To add visual effects</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(1, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="2">
+                <p class="question-number">Question 2 of 8</p>
+                <p class="question">What is a "pattern interrupt" in script writing?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">A technical error in the video</div>
+                    <div class="option" data-answer="b">A change in content (question, transition, new visual) every 30-60 seconds to maintain engagement</div>
+                    <div class="option" data-answer="c">Stopping the video midway</div>
+                    <div class="option" data-answer="d">Changing the video topic completely</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(2, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="3">
+                <p class="question-number">Question 3 of 8</p>
+                <p class="question">Which FREE AI tool can be used for script writing?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Adobe Premiere Pro</div>
+                    <div class="option" data-answer="b">ChatGPT Free Tier</div>
+                    <div class="option" data-answer="c">Final Cut Pro</div>
+                    <div class="option" data-answer="d">Photoshop</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(3, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="4">
+                <p class="question-number">Question 4 of 8</p>
+                <p class="question">Approximately how many words equal 1 minute of spoken content?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">50 words</div>
+                    <div class="option" data-answer="b">150 words</div>
+                    <div class="option" data-answer="c">300 words</div>
+                    <div class="option" data-answer="d">500 words</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(4, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="5">
+                <p class="question-number">Question 5 of 8</p>
+                <p class="question">What is the "Problem-Solution" script format?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Only talking about problems without solutions</div>
+                    <div class="option" data-answer="b">Introduce a problem, agitate it, then present the solution</div>
+                    <div class="option" data-answer="c">Listing random facts</div>
+                    <div class="option" data-answer="d">Copying competitor scripts</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(5, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="6">
+                <p class="question-number">Question 6 of 8</p>
+                <p class="question">What website helps you discover questions people are asking about a topic?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Netflix</div>
+                    <div class="option" data-answer="b">Answer The Public</div>
+                    <div class="option" data-answer="c">Instagram</div>
+                    <div class="option" data-answer="d">Spotify</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(6, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="7">
+                <p class="question-number">Question 7 of 8</p>
+                <p class="question">What are "content pillars" in a YouTube strategy?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Physical structures to hold cameras</div>
+                    <div class="option" data-answer="b">3-5 recurring themes or categories for your channel content</div>
+                    <div class="option" data-answer="c">Types of thumbnails</div>
+                    <div class="option" data-answer="d">Video editing software</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(7, 'b')" disabled>Check Answer</button></div>
+            </div>
+
+            <div class="question-container" data-question="8">
+                <p class="question-number">Question 8 of 8</p>
+                <p class="question">What should you include at the end of every YouTube script?</p>
+                <div class="options">
+                    <div class="option" data-answer="a">Your home address</div>
+                    <div class="option" data-answer="b">A clear call to action (subscribe, like, comment)</div>
+                    <div class="option" data-answer="c">A list of your competitors</div>
+                    <div class="option" data-answer="d">Nothing - just end abruptly</div>
+                </div>
+                <div class="feedback"></div>
+                <div class="btn-container"><button class="btn" onclick="checkAnswer(8, 'b')" disabled>Check Answer</button></div>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="score-circle">
+                <div class="score-inner">
+                    <span class="score-number" id="score-number">0</span>
+                    <span class="score-label">out of 8</span>
+                </div>
+            </div>
+            <p class="result-message" id="result-message"></p>
+            <p class="result-details" id="result-details"></p>
+            <button class="btn" onclick="restartQuiz()">Try Again</button>
+            <button class="btn" onclick="window.location.href='../04-AI-Voice-Generation/README.md'" style="margin-left: 10px;">Next Module</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        let score = 0;
+        let answered = new Set();
+        const totalQuestions = 8;
+        const correctAnswers = ['b', 'b', 'b', 'b', 'b', 'b', 'b', 'b'];
+
+        const explanations = {
+            1: "The hook is crucial for viewer retention. YouTube's algorithm favors videos where viewers stay longer. A strong hook in the first 30 seconds can dramatically improve your video's performance.",
+            2: "Pattern interrupts are changes in your content delivery (questions, transitions, visual changes) that re-engage viewers. They prevent the content from becoming monotonous and keep attention high.",
+            3: "ChatGPT's free tier is excellent for script writing. You can use it for brainstorming, creating outlines, writing drafts, and improving your scripts. Other free options include Claude and Google Gemini.",
+            4: "The average speaking pace is about 150 words per minute. This means an 8-minute video needs approximately 1,200 words. Knowing this helps you plan script length accurately.",
+            5: "The Problem-Solution format is highly effective: introduce a problem your audience faces, agitate it by explaining why it matters, then present your solution. This creates engagement and value.",
+            6: "Answer The Public (answerthepublic.com) visualizes search questions and autocomplete suggestions. It's invaluable for understanding what your audience wants to know about any topic.",
+            7: "Content pillars are 3-5 main themes your channel covers consistently. They help maintain focus, build authority, and give viewers clear expectations about your content.",
+            8: "Every video should end with a clear call to action. This could be asking viewers to subscribe, like, comment, or watch another video. CTAs significantly improve engagement metrics."
+        };
+
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const container = this.closest('.question-container');
+                const questionNum = parseInt(container.dataset.question);
+                if (answered.has(questionNum)) return;
+                container.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                container.querySelector('.btn').disabled = false;
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            if (answered.has(questionNum)) return;
+            const container = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = container.querySelector('.option.selected');
+            if (!selected) return;
+            answered.add(questionNum);
+            const userAnswer = selected.dataset.answer;
+            const feedback = container.querySelector('.feedback');
+            container.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+            });
+            if (userAnswer === correctAnswer) {
+                score++;
+                selected.classList.add('correct');
+                feedback.className = 'feedback show correct';
+                feedback.innerHTML = `<strong>Correct!</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            } else {
+                selected.classList.add('incorrect');
+                feedback.className = 'feedback show incorrect';
+                feedback.innerHTML = `<strong>Incorrect.</strong><div class="explanation">${explanations[questionNum]}</div>`;
+            }
+            const btn = container.querySelector('.btn');
+            if (questionNum < totalQuestions) {
+                btn.textContent = 'Next Question';
+                btn.onclick = () => nextQuestion(questionNum + 1);
+            } else {
+                btn.textContent = 'See Results';
+                btn.onclick = showResults;
+            }
+            btn.disabled = false;
+            updateProgress();
+        }
+
+        function nextQuestion(num) {
+            document.querySelector(`[data-question="${currentQuestion}"]`).classList.remove('active');
+            document.querySelector(`[data-question="${num}"]`).classList.add('active');
+            currentQuestion = num;
+        }
+
+        function updateProgress() {
+            const progress = (answered.size / totalQuestions) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+            document.getElementById('score-number').textContent = score;
+            let message, details;
+            if (score === totalQuestions) {
+                message = "Perfect Score!";
+                details = "You're ready to write amazing scripts! Move on to voice generation.";
+            } else if (score >= 6) {
+                message = "Great Job!";
+                details = "Solid understanding of script writing. Review missed questions and proceed.";
+            } else if (score >= 4) {
+                message = "Good Effort!";
+                details = "Review the README to improve your script writing skills.";
+            } else {
+                message = "Keep Learning!";
+                details = "Re-read Module 3 materials before proceeding.";
+            }
+            document.getElementById('result-message').textContent = message;
+            document.getElementById('result-details').textContent = details;
+        }
+
+        function restartQuiz() {
+            score = 0;
+            currentQuestion = 1;
+            answered.clear();
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.style.pointerEvents = 'auto';
+            });
+            document.querySelectorAll('.feedback').forEach(fb => { fb.className = 'feedback'; fb.innerHTML = ''; });
+            document.querySelectorAll('.question-container').forEach((container, index) => {
+                container.classList.remove('active');
+                if (index === 0) container.classList.add('active');
+                const btn = container.querySelector('.btn');
+                btn.textContent = 'Check Answer';
+                btn.disabled = true;
+                btn.onclick = () => checkAnswer(index + 1, correctAnswers[index]);
+            });
+            document.getElementById('progress').style.width = '0%';
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('quiz-container').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
