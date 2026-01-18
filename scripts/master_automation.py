@@ -233,15 +233,23 @@ PSYCHOLOGY-BASED STRUCTURE:
    - Clear next step (subscribe, comment their thoughts)
    - End with an inspiring or thought-provoking statement
 
-STYLE REQUIREMENTS:
-- Conversational tone - like talking to a friend
-- Short sentences for impact. Like this.
-- Use "you" frequently to speak directly to viewer
-- Include rhetorical questions to keep engagement
-- No stage directions - just the spoken words
-- Make every sentence earn its place
+STYLE REQUIREMENTS (CRITICAL - MUST SOUND HUMAN, NOT AI):
+- Write like a real person talking, NOT like an AI
+- Include natural speech patterns: "Look," "Here's the thing," "I mean," "honestly," "you know what?"
+- Vary sentence length dramatically - some very short. Others longer and more flowing with multiple clauses.
+- Use contractions always (don't, won't, can't, it's, that's, here's)
+- Include mild imperfections: restart a thought, self-correct ("Actually, let me put it this way...")
+- Add personal touches: "I used to struggle with this too" or "A friend of mine..."
+- Use informal language: "gonna," "wanna," "kinda," "pretty much"
+- Include filler words sparingly: "basically," "literally," "right?"
+- Express genuine emotion: frustration, excitement, surprise
+- Avoid AI patterns: no "In this video," no "Let's dive in," no "Without further ado"
+- Never use bullet-point style speaking or overly structured transitions
+- Sound like you're having a real conversation, not reading a script
+- Include moments of humor or sarcasm where appropriate
+- Reference current events or relatable everyday situations
 
-Write the complete script now:"""
+Write the complete script now (remember: sound HUMAN, not robotic):"""
 
         script = None
         
@@ -290,11 +298,11 @@ Write the complete script now:"""
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "You are an expert YouTube script writer who understands viewer psychology. You create scripts that hook viewers emotionally, use curiosity gaps, pattern interrupts, and storytelling to maximize watch time and engagement. Your scripts feel personal, relatable, and valuable."},
+                    {"role": "system", "content": "You are a human YouTube creator, NOT an AI. Write exactly like a real person speaks - with natural imperfections, personality, emotion, and conversational flow. Your scripts should be impossible to detect as AI-generated. Use contractions, informal language, personal anecdotes, and genuine reactions. Never sound robotic or overly polished."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=4000,
-                temperature=0.8
+                temperature=0.9
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -399,6 +407,7 @@ Focus on scenes that can be found in stock footage libraries."""
     def generate_voiceover(self, script, voice=None):
         """
         Generate voiceover using Edge TTS (100% FREE)
+        Also generates subtitles (SRT file) for better viewer engagement.
         
         Args:
             script: Text to convert to speech
@@ -408,16 +417,88 @@ Focus on scenes that can be found in stock footage libraries."""
         
         voice = voice or self.config['voice']
         output_path = self.dirs['voiceovers'] / 'voiceover.mp3'
+        subtitle_path = self.dirs['output'] / 'subtitles.srt'
         
         async def generate():
             import edge_tts
             communicate = edge_tts.Communicate(script, voice)
-            await communicate.save(str(output_path))
+            
+            # Generate audio with subtitle data
+            subtitles = []
+            audio_data = b""
+            
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_data += chunk["data"]
+                elif chunk["type"] == "WordBoundary":
+                    subtitles.append({
+                        "offset": chunk["offset"],
+                        "duration": chunk["duration"],
+                        "text": chunk["text"]
+                    })
+            
+            # Save audio
+            with open(str(output_path), "wb") as f:
+                f.write(audio_data)
+            
+            return subtitles
         
-        asyncio.run(generate())
+        subtitles = asyncio.run(generate())
         print(f"[VOICE] Saved to: {output_path}")
         
+        # Generate SRT subtitle file
+        if subtitles:
+            self._generate_srt(subtitles, subtitle_path)
+        
         return output_path
+    
+    def _generate_srt(self, word_timings, output_path):
+        """
+        Generate SRT subtitle file from word timings.
+        Groups words into readable subtitle chunks.
+        """
+        print("[SUBTITLES] Generating subtitles...")
+        
+        def format_time(ms):
+            hours = ms // 3600000
+            minutes = (ms % 3600000) // 60000
+            seconds = (ms % 60000) // 1000
+            milliseconds = ms % 1000
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+        
+        # Group words into subtitle chunks (5-8 words per subtitle)
+        srt_entries = []
+        current_words = []
+        current_start = 0
+        current_end = 0
+        words_per_subtitle = 6
+        
+        for i, word_data in enumerate(word_timings):
+            if not current_words:
+                current_start = word_data["offset"] // 10000  # Convert to ms
+            
+            current_words.append(word_data["text"])
+            current_end = (word_data["offset"] + word_data["duration"]) // 10000
+            
+            # Create subtitle entry when we have enough words or at end
+            if len(current_words) >= words_per_subtitle or i == len(word_timings) - 1:
+                srt_entries.append({
+                    "index": len(srt_entries) + 1,
+                    "start": current_start,
+                    "end": current_end,
+                    "text": " ".join(current_words)
+                })
+                current_words = []
+        
+        # Write SRT file
+        with open(str(output_path), "w", encoding="utf-8") as f:
+            for entry in srt_entries:
+                f.write(f"{entry['index']}\n")
+                f.write(f"{format_time(entry['start'])} --> {format_time(entry['end'])}\n")
+                f.write(f"{entry['text']}\n\n")
+        
+        print(f"[SUBTITLES] Saved to: {output_path}")
+        print(f"[SUBTITLES] Created {len(srt_entries)} subtitle entries")
     
     # ==================== FOOTAGE DOWNLOAD ====================
     
