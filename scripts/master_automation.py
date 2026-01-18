@@ -197,14 +197,49 @@ class FacelessVideoGenerator:
         
         prompt = f"""Write a YouTube video script about: {topic}
 
-Requirements:
-- Approximately {word_count} words ({length_minutes} minutes when spoken)
-- Start with an attention-grabbing hook (first 30 seconds)
-- Include 4-5 main sections with clear transitions
-- End with a strong call to action (subscribe, like, comment)
-- Conversational, engaging tone
-- No stage directions or narrator notes - just the spoken words
-- Make it informative and valuable for viewers
+TARGET: {word_count} words ({length_minutes} minutes when spoken)
+
+PSYCHOLOGY-BASED STRUCTURE:
+
+1. HOOK (First 15 seconds) - Create curiosity gap:
+   - Start with a shocking fact, question, or bold statement
+   - Make viewers feel they'll miss something important if they leave
+   - Example: "Most people waste 3 hours daily without realizing it..."
+
+2. PROBLEM AGITATION (30-60 seconds):
+   - Describe the pain point viewers are experiencing
+   - Make them feel understood ("You've probably felt...")
+   - Create emotional connection through relatable struggles
+
+3. CREDIBILITY + PROMISE (30 seconds):
+   - Briefly establish why this information is valuable
+   - Promise a transformation or solution
+   - Create anticipation: "By the end of this video, you'll know exactly how to..."
+
+4. MAIN CONTENT (3-5 sections):
+   - Each section: Problem → Solution → Benefit
+   - Use "pattern interrupts" between sections (surprising facts, questions)
+   - Include specific examples and stories (not generic advice)
+   - Create "aha moments" that give dopamine hits
+   - Use open loops: hint at what's coming next to retain viewers
+
+5. EMOTIONAL CLIMAX:
+   - Paint a picture of their life after applying this knowledge
+   - Use future pacing: "Imagine waking up and..."
+   - Connect to deeper desires (freedom, respect, security, happiness)
+
+6. CALL TO ACTION (Final 30 seconds):
+   - Remind them of the value they received
+   - Clear next step (subscribe, comment their thoughts)
+   - End with an inspiring or thought-provoking statement
+
+STYLE REQUIREMENTS:
+- Conversational tone - like talking to a friend
+- Short sentences for impact. Like this.
+- Use "you" frequently to speak directly to viewer
+- Include rhetorical questions to keep engagement
+- No stage directions - just the spoken words
+- Make every sentence earn its place
 
 Write the complete script now:"""
 
@@ -255,11 +290,11 @@ Write the complete script now:"""
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "You are a professional YouTube script writer who creates engaging, informative content."},
+                    {"role": "system", "content": "You are an expert YouTube script writer who understands viewer psychology. You create scripts that hook viewers emotionally, use curiosity gaps, pattern interrupts, and storytelling to maximize watch time and engagement. Your scripts feel personal, relatable, and valuable."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=4000,
-                temperature=0.7
+                temperature=0.8
             )
             return response.choices[0].message.content
         except Exception as e:
