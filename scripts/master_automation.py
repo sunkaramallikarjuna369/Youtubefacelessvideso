@@ -358,20 +358,26 @@ Write the complete script now (remember: sound HUMAN, not robotic):"""
         """
         print("\n[KEYWORDS] Extracting segment-based keywords for better footage matching...")
         
-        prompt = f"""Analyze this video script and divide it into 5-7 logical sections.
-For each section, provide 2-3 specific keywords that would find relevant stock footage.
+        prompt = f"""Analyze this video script and divide it into 8-12 short segments (every 15-20 seconds of speech).
+For each segment, provide 3-4 HIGHLY SPECIFIC visual keywords for stock footage.
 
 Script:
-{script[:3000]}
+{script[:4000]}
 
 Return ONLY a JSON array in this exact format (no other text):
 [
-  {{"section": 1, "summary": "brief description", "keywords": ["keyword1", "keyword2"]}},
-  {{"section": 2, "summary": "brief description", "keywords": ["keyword1", "keyword2"]}}
+  {{"section": 1, "summary": "what's being discussed", "keywords": ["specific visual 1", "specific visual 2", "specific visual 3"]}},
+  {{"section": 2, "summary": "what's being discussed", "keywords": ["specific visual 1", "specific visual 2", "specific visual 3"]}}
 ]
 
-Make keywords specific and visual (e.g., "person typing laptop" not "productivity").
-Focus on scenes that can be found in stock footage libraries."""
+CRITICAL RULES FOR KEYWORDS:
+- Be EXTREMELY specific and visual: "woman stressed at desk" not "stress"
+- Describe actual scenes: "person counting money bills" not "finance"
+- Include actions: "man running morning park" not "exercise"
+- Use searchable terms: "coffee cup steam morning" not "morning routine"
+- Think like a stock footage search: "business team meeting office" not "teamwork"
+- Each keyword should paint a clear visual picture
+- Vary the scenes - don't repeat similar footage across segments"""
 
         result = None
         
@@ -530,18 +536,20 @@ Focus on scenes that can be found in stock footage libraries."""
         print(f"[FOOTAGE] Total clips downloaded: {len(downloaded)}")
         return downloaded
     
-    def download_segment_footage(self, segments, clips_per_segment=2):
+    def download_segment_footage(self, segments, clips_per_segment=3):
         """
         Download footage for each script segment for better matching.
+        Downloads more clips per segment for better variety and screen-voiceover sync.
         
         Args:
             segments: List of segment dicts with 'keywords' field
-            clips_per_segment: Number of clips per segment
+            clips_per_segment: Number of clips per segment (default: 3 for better variety)
             
         Returns:
             List of lists, where each inner list contains footage paths for that segment
         """
         print("\n[FOOTAGE] Downloading segment-based footage for better matching...")
+        print(f"[FOOTAGE] Target: {clips_per_segment} clips per segment for variety")
         
         segment_footage = []
         
@@ -550,30 +558,34 @@ Focus on scenes that can be found in stock footage libraries."""
             if not keywords:
                 continue
                 
-            print(f"\n[FOOTAGE] Segment {i+1}: {keywords}")
+            print(f"\n[FOOTAGE] Segment {i+1}/{len(segments)}: {keywords[:3]}")
             
             segment_clips = []
             
-            # Try Pexels first
-            for keyword in keywords[:2]:
-                pexels_clips = self._download_from_pexels([keyword], clips_per_segment)
-                segment_clips.extend(pexels_clips)
+            # Try all keywords from Pexels first (use all 3-4 keywords)
+            for keyword in keywords:
                 if len(segment_clips) >= clips_per_segment:
                     break
+                pexels_clips = self._download_from_pexels([keyword], 2)
+                for clip in pexels_clips:
+                    if clip not in segment_clips:
+                        segment_clips.append(clip)
             
-            # If not enough, try Pixabay
+            # If not enough, try Pixabay with all keywords
             if len(segment_clips) < clips_per_segment:
-                for keyword in keywords[:2]:
-                    pixabay_clips = self._download_from_pixabay([keyword], clips_per_segment)
-                    segment_clips.extend(pixabay_clips)
+                for keyword in keywords:
                     if len(segment_clips) >= clips_per_segment:
                         break
+                    pixabay_clips = self._download_from_pixabay([keyword], 2)
+                    for clip in pixabay_clips:
+                        if clip not in segment_clips:
+                            segment_clips.append(clip)
             
             segment_footage.append(segment_clips)
-            print(f"[FOOTAGE] Segment {i+1}: {len(segment_clips)} clips downloaded")
+            print(f"[FOOTAGE] Segment {i+1}: {len(segment_clips)} clips")
         
         total_clips = sum(len(clips) for clips in segment_footage)
-        print(f"\n[FOOTAGE] Total clips downloaded: {total_clips} across {len(segment_footage)} segments")
+        print(f"\n[FOOTAGE] Total: {total_clips} clips across {len(segment_footage)} segments")
         
         return segment_footage
     
