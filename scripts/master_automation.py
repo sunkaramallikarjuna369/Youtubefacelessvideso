@@ -786,38 +786,44 @@ Return ONLY a JSON array of strings, no other text:
         if key_points and len(key_points) > 0:
             print(f"[VIDEO] Adding {len(key_points)} text overlays (using PIL)...")
             
-            # Calculate timing for each key point
-            interval = duration / (len(key_points) + 1)
-            text_clips = []
-            
-            for i, point in enumerate(key_points):
-                start_time = (i + 1) * interval - 2.5  # Start 2.5 seconds before center
-                if start_time < 0:
-                    start_time = 0
+            try:
+                # Calculate timing for each key point
+                interval = duration / (len(key_points) + 1)
+                text_clips = []
                 
-                try:
-                    # Create text image using PIL
-                    text_img_path = self.create_text_image(
-                        point, 
-                        self.config['width'], 
-                        self.config['height']
-                    )
-                    text_image_paths.append(text_img_path)
+                for i, point in enumerate(key_points):
+                    start_time = (i + 1) * interval - 2.5  # Start 2.5 seconds before center
+                    if start_time < 0:
+                        start_time = 0
                     
-                    # Create ImageClip from the PIL-generated image
-                    txt_clip = ImageClip(text_img_path)
-                    txt_clip = txt_clip.set_start(start_time)
-                    txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
-                    txt_clip = txt_clip.crossfadein(0.5).crossfadeout(0.5)
-                    
-                    text_clips.append(txt_clip)
-                except Exception as e:
-                    print(f"[VIDEO] Could not create text overlay: {e}")
-            
-            if text_clips:
-                # Composite video with text overlays
-                video = CompositeVideoClip([video] + text_clips)
-                print(f"[VIDEO] Added {len(text_clips)} text overlays")
+                    try:
+                        # Create text image using PIL
+                        text_img_path = self.create_text_image(
+                            point, 
+                            self.config['width'], 
+                            self.config['height']
+                        )
+                        text_image_paths.append(text_img_path)
+                        
+                        # Create ImageClip with transparency support
+                        txt_clip = ImageClip(text_img_path, transparent=True)
+                        txt_clip = txt_clip.set_start(start_time)
+                        txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
+                        
+                        text_clips.append(txt_clip)
+                        print(f"[VIDEO] Created overlay {i+1}/{len(key_points)}: {point[:30]}...")
+                    except Exception as e:
+                        print(f"[VIDEO] Could not create text overlay {i+1}: {e}")
+                
+                if text_clips:
+                    # Composite video with text overlays
+                    print(f"[VIDEO] Compositing {len(text_clips)} text overlays with video...")
+                    video = CompositeVideoClip([video] + text_clips, size=(self.config['width'], self.config['height']))
+                    print(f"[VIDEO] Successfully added {len(text_clips)} text overlays")
+            except Exception as e:
+                print(f"[VIDEO] Error adding text overlays, continuing without them: {e}")
+                import traceback
+                traceback.print_exc()
         
         # Add audio
         video = video.set_audio(audio)
