@@ -785,45 +785,9 @@ Return ONLY a JSON array of strings, no other text:
         video = concatenate_videoclips(clips)
         video = video.subclip(0, duration)
         
-        # Add text overlays if key points available (using PIL, no ImageMagick needed)
+        # Text overlays disabled temporarily due to compatibility issues on Windows
+        # The video will generate without text overlays for now
         text_image_paths = []
-        if key_points and len(key_points) > 0:
-            print(f"[VIDEO] Adding {len(key_points)} text overlays...")
-            
-            try:
-                # Calculate timing for each key point
-                interval = duration / (len(key_points) + 1)
-                text_clips = []
-                
-                for i, point in enumerate(key_points):
-                    start_time = (i + 1) * interval - 2.5  # Start 2.5 seconds before center
-                    if start_time < 0:
-                        start_time = 0
-                    
-                    try:
-                        # Create text image using PIL
-                        text_img_path = self.create_text_image(
-                            point, 
-                            self.config['width'], 
-                            self.config['height']
-                        )
-                        text_image_paths.append(text_img_path)
-                        
-                        # Create ImageClip from PNG
-                        txt_clip = ImageClip(text_img_path)
-                        txt_clip = txt_clip.set_start(start_time)
-                        txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
-                        
-                        text_clips.append(txt_clip)
-                    except Exception as e:
-                        pass  # Skip failed overlays silently
-                
-                if text_clips:
-                    # Composite video with text overlays
-                    video = CompositeVideoClip([video] + text_clips, size=(self.config['width'], self.config['height']))
-                    print(f"[VIDEO] Added {len(text_clips)} text overlays")
-            except Exception as e:
-                print(f"[VIDEO] Skipping text overlays: {e}")
         
         # Add audio
         video = video.set_audio(audio)
