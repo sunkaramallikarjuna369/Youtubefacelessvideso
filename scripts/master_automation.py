@@ -638,6 +638,96 @@ Return ONLY a JSON array of strings, no other text:
         
         return None
     
+    def create_text_image(self, text, width, height):
+        """
+        Create a text overlay image using PIL (no ImageMagick required).
+        
+        Args:
+            text: Text to display
+            width: Image width
+            height: Image height
+            
+        Returns:
+            Path to the created image
+        """
+        from PIL import Image, ImageDraw, ImageFont
+        import tempfile
+        
+        # Create transparent image
+        img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        
+        # Try to load a font, fall back to default
+        font_size = 50
+        try:
+            # Try common Windows fonts first
+            font_paths = [
+                "C:/Windows/Fonts/arial.ttf",
+                "C:/Windows/Fonts/arialbd.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            ]
+            font = None
+            for font_path in font_paths:
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    break
+                except:
+                    continue
+            if font is None:
+                font = ImageFont.load_default()
+        except:
+            font = ImageFont.load_default()
+        
+        # Word wrap text
+        words = text.upper().split()
+        lines = []
+        current_line = []
+        max_width = width - 100
+        
+        for word in words:
+            current_line.append(word)
+            test_line = ' '.join(current_line)
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            if bbox[2] - bbox[0] > max_width:
+                if len(current_line) > 1:
+                    current_line.pop()
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+                else:
+                    lines.append(test_line)
+                    current_line = []
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        # Calculate text position (bottom third of screen)
+        line_height = font_size + 10
+        total_text_height = len(lines) * line_height
+        y_start = int(height * 0.75) - total_text_height // 2
+        
+        # Draw text with outline
+        for i, line in enumerate(lines):
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
+            y = y_start + i * line_height
+            
+            # Draw black outline
+            outline_width = 3
+            for dx in range(-outline_width, outline_width + 1):
+                for dy in range(-outline_width, outline_width + 1):
+                    if dx != 0 or dy != 0:
+                        draw.text((x + dx, y + dy), line, font=font, fill=(0, 0, 0, 255))
+            
+            # Draw white text
+            draw.text((x, y), line, font=font, fill=(255, 255, 255, 255))
+        
+        # Save to temp file
+        temp_path = tempfile.mktemp(suffix='.png')
+        img.save(temp_path, 'PNG')
+        
+        return temp_path
+    
     def assemble_video(self, voiceover_path, footage_paths, script=None, ai_provider='auto'):
         """
         Assemble final video from voiceover and footage with text overlays
@@ -652,7 +742,7 @@ Return ONLY a JSON array of strings, no other text:
         
         from moviepy.editor import (
             VideoFileClip, AudioFileClip, concatenate_videoclips,
-            TextClip, CompositeVideoClip
+            ImageClip, CompositeVideoClip
         )
         
         # Load audio
@@ -691,34 +781,31 @@ Return ONLY a JSON array of strings, no other text:
         video = concatenate_videoclips(clips)
         video = video.subclip(0, duration)
         
-        # Add text overlays if key points available
+        # Add text overlays if key points available (using PIL, no ImageMagick needed)
+        text_image_paths = []
         if key_points and len(key_points) > 0:
-            print(f"[VIDEO] Adding {len(key_points)} text overlays...")
+            print(f"[VIDEO] Adding {len(key_points)} text overlays (using PIL)...")
             
             # Calculate timing for each key point
             interval = duration / (len(key_points) + 1)
             text_clips = []
             
             for i, point in enumerate(key_points):
-                start_time = (i + 1) * interval - 2  # Start 2 seconds before center
+                start_time = (i + 1) * interval - 2.5  # Start 2.5 seconds before center
                 if start_time < 0:
                     start_time = 0
                 
                 try:
-                    # Create text clip with styling
-                    txt_clip = TextClip(
-                        point.upper(),
-                        fontsize=60,
-                        color='white',
-                        font='DejaVu-Sans-Bold',
-                        stroke_color='black',
-                        stroke_width=3,
-                        size=(self.config['width'] - 200, None),
-                        method='caption'
+                    # Create text image using PIL
+                    text_img_path = self.create_text_image(
+                        point, 
+                        self.config['width'], 
+                        self.config['height']
                     )
+                    text_image_paths.append(text_img_path)
                     
-                    # Position at bottom third of screen
-                    txt_clip = txt_clip.set_position(('center', self.config['height'] * 0.75))
+                    # Create ImageClip from the PIL-generated image
+                    txt_clip = ImageClip(text_img_path)
                     txt_clip = txt_clip.set_start(start_time)
                     txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
                     txt_clip = txt_clip.crossfadein(0.5).crossfadeout(0.5)
@@ -754,6 +841,14 @@ Return ONLY a JSON array of strings, no other text:
         for clip in clips:
             try:
                 clip.close()
+            except:
+                pass
+        
+        # Clean up temp text images
+        import os
+        for img_path in text_image_paths:
+            try:
+                os.remove(img_path)
             except:
                 pass
         
