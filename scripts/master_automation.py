@@ -589,24 +589,81 @@ Focus on scenes that can be found in stock footage libraries."""
     
     # ==================== VIDEO ASSEMBLY ====================
     
-    def assemble_video(self, voiceover_path, footage_paths):
+    def extract_key_points(self, script, ai_provider='auto'):
         """
-        Assemble final video from voiceover and footage
+        Extract key points from script for text overlays.
+        
+        Args:
+            script: The video script
+            ai_provider: AI provider to use
+            
+        Returns:
+            List of key point strings to display on screen
+        """
+        print("[VIDEO] Extracting key points for text overlays...")
+        
+        prompt = f"""Extract 8-12 key points from this video script that should be displayed as text overlays.
+Each point should be:
+- Short (3-7 words max)
+- A key fact, tip, or important statement
+- Easy to read quickly on screen
+
+Script:
+{script[:3000]}
+
+Return ONLY a JSON array of strings, no other text:
+["Key point 1", "Key point 2", "Key point 3"]"""
+
+        result = None
+        
+        if ai_provider == 'auto':
+            result = self._generate_with_groq(prompt)
+            if result is None:
+                result = self._generate_with_gemini(prompt)
+        elif ai_provider == 'groq':
+            result = self._generate_with_groq(prompt)
+        elif ai_provider == 'gemini':
+            result = self._generate_with_gemini(prompt)
+        
+        if result:
+            try:
+                import re
+                json_match = re.search(r'\[[\s\S]*?\]', result)
+                if json_match:
+                    key_points = json.loads(json_match.group())
+                    print(f"[VIDEO] Extracted {len(key_points)} key points for overlays")
+                    return key_points
+            except Exception as e:
+                print(f"[VIDEO] Error parsing key points: {e}")
+        
+        return None
+    
+    def assemble_video(self, voiceover_path, footage_paths, script=None, ai_provider='auto'):
+        """
+        Assemble final video from voiceover and footage with text overlays
         
         Args:
             voiceover_path: Path to voiceover audio
             footage_paths: List of paths to video clips
+            script: Optional script for extracting key points for text overlays
+            ai_provider: AI provider for key point extraction
         """
         print("\n[VIDEO] Assembling video...")
         
         from moviepy.editor import (
-            VideoFileClip, AudioFileClip, concatenate_videoclips
+            VideoFileClip, AudioFileClip, concatenate_videoclips,
+            TextClip, CompositeVideoClip
         )
         
         # Load audio
         audio = AudioFileClip(str(voiceover_path))
         duration = audio.duration
         print(f"[VIDEO] Audio duration: {duration:.1f} seconds")
+        
+        # Extract key points for text overlays if script provided
+        key_points = None
+        if script:
+            key_points = self.extract_key_points(script, ai_provider)
         
         # Load and prepare video clips
         clips = []
@@ -634,6 +691,47 @@ Focus on scenes that can be found in stock footage libraries."""
         video = concatenate_videoclips(clips)
         video = video.subclip(0, duration)
         
+        # Add text overlays if key points available
+        if key_points and len(key_points) > 0:
+            print(f"[VIDEO] Adding {len(key_points)} text overlays...")
+            
+            # Calculate timing for each key point
+            interval = duration / (len(key_points) + 1)
+            text_clips = []
+            
+            for i, point in enumerate(key_points):
+                start_time = (i + 1) * interval - 2  # Start 2 seconds before center
+                if start_time < 0:
+                    start_time = 0
+                
+                try:
+                    # Create text clip with styling
+                    txt_clip = TextClip(
+                        point.upper(),
+                        fontsize=60,
+                        color='white',
+                        font='DejaVu-Sans-Bold',
+                        stroke_color='black',
+                        stroke_width=3,
+                        size=(self.config['width'] - 200, None),
+                        method='caption'
+                    )
+                    
+                    # Position at bottom third of screen
+                    txt_clip = txt_clip.set_position(('center', self.config['height'] * 0.75))
+                    txt_clip = txt_clip.set_start(start_time)
+                    txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
+                    txt_clip = txt_clip.crossfadein(0.5).crossfadeout(0.5)
+                    
+                    text_clips.append(txt_clip)
+                except Exception as e:
+                    print(f"[VIDEO] Could not create text overlay: {e}")
+            
+            if text_clips:
+                # Composite video with text overlays
+                video = CompositeVideoClip([video] + text_clips)
+                print(f"[VIDEO] Added {len(text_clips)} text overlays")
+        
         # Add audio
         video = video.set_audio(audio)
         
@@ -654,7 +752,10 @@ Focus on scenes that can be found in stock footage libraries."""
         audio.close()
         video.close()
         for clip in clips:
-            clip.close()
+            try:
+                clip.close()
+            except:
+                pass
         
         print(f"[VIDEO] Saved to: {output_path}")
         return output_path
@@ -838,8 +939,8 @@ We cover all the essential concepts, tips, and strategies you need to succeed.
             # User provided specific keywords
             footage = self.download_footage(footage_keywords)
         
-        # Step 4: Assemble video
-        video = self.assemble_video(voiceover, footage)
+        # Step 4: Assemble video with text overlays
+        video = self.assemble_video(voiceover, footage, script=script, ai_provider=ai_provider)
         if not video:
             return None
         
