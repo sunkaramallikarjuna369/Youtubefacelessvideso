@@ -788,8 +788,7 @@ Return ONLY a JSON array of strings, no other text:
         # Add text overlays if key points available (using PIL, no ImageMagick needed)
         text_image_paths = []
         if key_points and len(key_points) > 0:
-            print(f"[VIDEO] Adding {len(key_points)} text overlays (using PIL)...")
-            sys.stdout.flush()
+            print(f"[VIDEO] Adding {len(key_points)} text overlays...")
             
             try:
                 # Calculate timing for each key point
@@ -803,8 +802,6 @@ Return ONLY a JSON array of strings, no other text:
                     
                     try:
                         # Create text image using PIL
-                        print(f"[VIDEO] Creating text image {i+1}...")
-                        sys.stdout.flush()
                         text_img_path = self.create_text_image(
                             point, 
                             self.config['width'], 
@@ -812,34 +809,21 @@ Return ONLY a JSON array of strings, no other text:
                         )
                         text_image_paths.append(text_img_path)
                         
-                        # Create ImageClip from PNG (moviepy handles RGBA automatically)
-                        print(f"[VIDEO] Creating ImageClip {i+1}...")
-                        sys.stdout.flush()
+                        # Create ImageClip from PNG
                         txt_clip = ImageClip(text_img_path)
                         txt_clip = txt_clip.set_start(start_time)
                         txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
                         
                         text_clips.append(txt_clip)
-                        print(f"[VIDEO] Created overlay {i+1}/{len(key_points)}: {point[:30]}...")
-                        sys.stdout.flush()
                     except Exception as e:
-                        print(f"[VIDEO] Could not create text overlay {i+1}: {e}")
-                        sys.stdout.flush()
-                        import traceback
-                        traceback.print_exc()
+                        pass  # Skip failed overlays silently
                 
                 if text_clips:
                     # Composite video with text overlays
-                    print(f"[VIDEO] Compositing {len(text_clips)} text overlays with video...")
-                    sys.stdout.flush()
                     video = CompositeVideoClip([video] + text_clips, size=(self.config['width'], self.config['height']))
-                    print(f"[VIDEO] Successfully added {len(text_clips)} text overlays")
-                    sys.stdout.flush()
+                    print(f"[VIDEO] Added {len(text_clips)} text overlays")
             except Exception as e:
-                print(f"[VIDEO] Error adding text overlays, continuing without them: {e}")
-                sys.stdout.flush()
-                import traceback
-                traceback.print_exc()
+                print(f"[VIDEO] Skipping text overlays: {e}")
         
         # Add audio
         video = video.set_audio(audio)
