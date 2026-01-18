@@ -4,20 +4,23 @@ MASTER AUTOMATION SCRIPT
 Complete Faceless YouTube Video Generation Pipeline
 
 This script automates the entire process from topic to uploaded video:
-1. Generate video topic ideas
-2. Write script with AI
-3. Generate voiceover
-4. Download stock footage
-5. Assemble video
-6. Create thumbnail
-7. Generate metadata
-8. Upload to YouTube (optional)
+1. Suggest trending topics (with monetization focus)
+2. Generate video topic ideas
+3. Write script with AI (Gemini, Groq, or Ollama)
+4. Generate voiceover
+5. Download stock footage (Pexels + Pixabay)
+6. Assemble video
+7. Create thumbnail
+8. Generate metadata
+9. Upload to YouTube (optional)
 
 Requirements:
-pip install edge-tts moviepy Pillow requests python-dotenv google-generativeai
+pip install edge-tts moviepy Pillow requests python-dotenv google-generativeai groq pytrends
 
 Usage:
 python master_automation.py --topic "Your Video Topic" --length 8
+python master_automation.py --suggest-topics  # Get trending topic suggestions
+python master_automation.py --interactive     # Interactive mode with prompts
 
 Author: Faceless YouTube Automation Course
 """
@@ -28,12 +31,112 @@ import json
 import asyncio
 import argparse
 import requests
+import random
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
+
+
+def get_trending_topics(niche=None):
+    """
+    Get trending topics from Google Trends with monetization focus.
+    High CPM niches: Finance, Tech, Health, Education, Business, Legal
+    """
+    print("\n" + "=" * 60)
+    print("TRENDING TOPIC SUGGESTIONS (Monetization Focused)")
+    print("=" * 60)
+    
+    # High CPM niches for better monetization
+    high_cpm_niches = {
+        'finance': {
+            'keywords': ['investing', 'stocks', 'crypto', 'money', 'budget', 'savings', 'wealth'],
+            'cpm_range': '$15-$50',
+            'topics': [
+                "5 Investment Mistakes That Cost You Thousands",
+                "How to Build Wealth in Your 20s",
+                "Passive Income Ideas That Actually Work",
+                "Stock Market Secrets for Beginners",
+                "Crypto Investing Guide for 2024"
+            ]
+        },
+        'technology': {
+            'keywords': ['AI', 'software', 'gadgets', 'apps', 'coding', 'tech'],
+            'cpm_range': '$10-$30',
+            'topics': [
+                "AI Tools That Will Change Your Life",
+                "Best Productivity Apps You Need",
+                "Future Technology That Will Blow Your Mind",
+                "Coding Tips Every Developer Should Know",
+                "Tech Gadgets Worth Your Money"
+            ]
+        },
+        'health': {
+            'keywords': ['fitness', 'nutrition', 'wellness', 'diet', 'exercise', 'mental health'],
+            'cpm_range': '$10-$25',
+            'topics': [
+                "Morning Habits of Successful People",
+                "Foods That Boost Your Brain Power",
+                "Simple Exercises for Better Health",
+                "Mental Health Tips Everyone Needs",
+                "Sleep Hacks for Better Rest"
+            ]
+        },
+        'education': {
+            'keywords': ['learning', 'study', 'skills', 'career', 'courses', 'knowledge'],
+            'cpm_range': '$8-$20',
+            'topics': [
+                "Skills That Will Make You Rich",
+                "How to Learn Anything Fast",
+                "Career Advice Nobody Tells You",
+                "Study Techniques That Actually Work",
+                "Online Courses Worth Taking"
+            ]
+        },
+        'business': {
+            'keywords': ['entrepreneur', 'startup', 'marketing', 'sales', 'business'],
+            'cpm_range': '$12-$35',
+            'topics': [
+                "Business Ideas You Can Start Today",
+                "Marketing Strategies That Work",
+                "How to Start a Side Hustle",
+                "Entrepreneur Mistakes to Avoid",
+                "Passive Income Business Ideas"
+            ]
+        }
+    }
+    
+    # Try to get real-time trends from Google
+    try:
+        from pytrends.request import TrendReq
+        pytrends = TrendReq(hl='en-US', tz=360)
+        trending = pytrends.trending_searches(pn='united_states')
+        real_trends = trending[0].tolist()[:10]
+        print("\nReal-time Google Trends:")
+        for i, trend in enumerate(real_trends, 1):
+            print(f"  {i}. {trend}")
+    except Exception as e:
+        print(f"\nCould not fetch real-time trends: {e}")
+        real_trends = []
+    
+    print("\n" + "-" * 60)
+    print("HIGH CPM TOPIC SUGGESTIONS (Better Monetization):")
+    print("-" * 60)
+    
+    suggestions = []
+    for niche_name, niche_data in high_cpm_niches.items():
+        print(f"\n[{niche_name.upper()}] - CPM: {niche_data['cpm_range']}")
+        for topic in niche_data['topics'][:3]:
+            print(f"  - {topic}")
+            suggestions.append({'niche': niche_name, 'topic': topic, 'cpm': niche_data['cpm_range']})
+    
+    print("\n" + "=" * 60)
+    print("TIP: Finance and Business topics typically have the highest CPM!")
+    print("=" * 60)
+    
+    return suggestions
 
 
 class FacelessVideoGenerator:
@@ -79,14 +182,14 @@ class FacelessVideoGenerator:
     
     # ==================== SCRIPT GENERATION ====================
     
-    def generate_script(self, topic, length_minutes=8, use_ollama=True):
+    def generate_script(self, topic, length_minutes=8, ai_provider='auto'):
         """
         Generate a video script using AI
         
         Args:
             topic: Video topic
             length_minutes: Target video length
-            use_ollama: Use local Ollama (True) or Gemini API (False)
+            ai_provider: 'auto', 'groq', 'gemini', or 'ollama'
         """
         print(f"\n[SCRIPT] Generating script for: {topic}")
         
@@ -101,20 +204,33 @@ Requirements:
 - End with a strong call to action (subscribe, like, comment)
 - Conversational, engaging tone
 - No stage directions or narrator notes - just the spoken words
+- Make it informative and valuable for viewers
 
 Write the complete script now:"""
 
         script = None
         
-        if use_ollama:
+        # Try AI providers in order of preference
+        if ai_provider == 'auto':
+            # Try Groq first (fastest), then Gemini, then Ollama
+            script = self._generate_with_groq(prompt)
+            if script is None:
+                script = self._generate_with_gemini(prompt)
+            if script is None:
+                script = self._generate_with_ollama(prompt)
+        elif ai_provider == 'groq':
+            script = self._generate_with_groq(prompt)
+        elif ai_provider == 'gemini':
+            script = self._generate_with_gemini(prompt)
+        elif ai_provider == 'ollama':
             script = self._generate_with_ollama(prompt)
         
         if script is None:
-            script = self._generate_with_gemini(prompt)
-        
-        if script is None:
             print("[SCRIPT] ERROR: Could not generate script")
-            print("[SCRIPT] Make sure Ollama is running (ollama serve) or GEMINI_API_KEY is set")
+            print("[SCRIPT] Make sure you have set API keys in .env file:")
+            print("  - GROQ_API_KEY (fastest)")
+            print("  - GEMINI_API_KEY")
+            print("  - Or run Ollama locally (ollama serve)")
             return None
         
         # Save script
@@ -123,6 +239,32 @@ Write the complete script now:"""
         print(f"[SCRIPT] Saved to: {script_path}")
         
         return script
+    
+    def _generate_with_groq(self, prompt):
+        """Generate text using Groq API (fastest)"""
+        api_key = os.getenv('GROQ_API_KEY')
+        if not api_key:
+            print("[SCRIPT] No GROQ_API_KEY found")
+            return None
+        
+        try:
+            print("[SCRIPT] Using Groq API (fastest)...")
+            from groq import Groq
+            client = Groq(api_key=api_key)
+            
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": "You are a professional YouTube script writer who creates engaging, informative content."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=4000,
+                temperature=0.7
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"[SCRIPT] Groq error: {e}")
+        return None
     
     def _generate_with_ollama(self, prompt):
         """Generate text using local Ollama"""
@@ -143,6 +285,7 @@ Write the complete script now:"""
         """Generate text using Google Gemini API"""
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key:
+            print("[SCRIPT] No GEMINI_API_KEY found")
             return None
         
         try:
@@ -185,7 +328,7 @@ Write the complete script now:"""
     
     def download_footage(self, keywords, clips_per_keyword=3):
         """
-        Download stock footage from Pexels (FREE API)
+        Download stock footage from Pexels and Pixabay (FREE APIs)
         
         Args:
             keywords: List of search keywords
@@ -193,16 +336,36 @@ Write the complete script now:"""
         """
         print("\n[FOOTAGE] Downloading stock footage...")
         
+        downloaded = []
+        
+        # Try Pexels first
+        pexels_clips = self._download_from_pexels(keywords, clips_per_keyword)
+        downloaded.extend(pexels_clips)
+        
+        # If not enough clips, try Pixabay
+        if len(downloaded) < clips_per_keyword * len(keywords):
+            pixabay_clips = self._download_from_pixabay(keywords, clips_per_keyword)
+            downloaded.extend(pixabay_clips)
+        
+        if not downloaded:
+            print("[FOOTAGE] No clips downloaded, creating placeholders...")
+            return self._create_placeholder_footage()
+        
+        print(f"[FOOTAGE] Total clips downloaded: {len(downloaded)}")
+        return downloaded
+    
+    def _download_from_pexels(self, keywords, clips_per_keyword):
+        """Download footage from Pexels API"""
         api_key = os.getenv('PEXELS_API_KEY')
         if not api_key:
-            print("[FOOTAGE] No PEXELS_API_KEY - creating placeholder")
-            return self._create_placeholder_footage()
+            print("[FOOTAGE] No PEXELS_API_KEY - skipping Pexels")
+            return []
         
         downloaded = []
         headers = {"Authorization": api_key}
         
         for keyword in keywords:
-            print(f"[FOOTAGE] Searching: {keyword}")
+            print(f"[FOOTAGE] Searching Pexels: {keyword}")
             
             try:
                 response = requests.get(
@@ -212,6 +375,7 @@ Write the complete script now:"""
                 )
                 
                 if response.status_code != 200:
+                    print(f"[FOOTAGE] Pexels API error: {response.status_code}")
                     continue
                 
                 videos = response.json().get('videos', [])
@@ -224,7 +388,7 @@ Write the complete script now:"""
                         continue
                     
                     video_url = hd_files[0].get('link')
-                    filename = f"{keyword.replace(' ', '_')}_{i+1}.mp4"
+                    filename = f"pexels_{keyword.replace(' ', '_')}_{i+1}.mp4"
                     output_path = self.dirs['footage'] / filename
                     
                     video_response = requests.get(video_url, stream=True)
@@ -236,10 +400,61 @@ Write the complete script now:"""
                     print(f"[FOOTAGE] Downloaded: {filename}")
                     
             except Exception as e:
-                print(f"[FOOTAGE] Error: {e}")
+                print(f"[FOOTAGE] Pexels error: {e}")
         
-        if not downloaded:
-            return self._create_placeholder_footage()
+        return downloaded
+    
+    def _download_from_pixabay(self, keywords, clips_per_keyword):
+        """Download footage from Pixabay API"""
+        api_key = os.getenv('PIXABAY_API_KEY')
+        if not api_key:
+            print("[FOOTAGE] No PIXABAY_API_KEY - skipping Pixabay")
+            return []
+        
+        downloaded = []
+        
+        for keyword in keywords:
+            print(f"[FOOTAGE] Searching Pixabay: {keyword}")
+            
+            try:
+                response = requests.get(
+                    "https://pixabay.com/api/videos/",
+                    params={
+                        "key": api_key,
+                        "q": keyword,
+                        "per_page": clips_per_keyword,
+                        "video_type": "film"
+                    }
+                )
+                
+                if response.status_code != 200:
+                    print(f"[FOOTAGE] Pixabay API error: {response.status_code}")
+                    continue
+                
+                videos = response.json().get('hits', [])
+                
+                for i, video in enumerate(videos):
+                    # Get medium quality video (good balance of quality and size)
+                    video_url = video.get('videos', {}).get('medium', {}).get('url')
+                    if not video_url:
+                        video_url = video.get('videos', {}).get('small', {}).get('url')
+                    
+                    if not video_url:
+                        continue
+                    
+                    filename = f"pixabay_{keyword.replace(' ', '_')}_{i+1}.mp4"
+                    output_path = self.dirs['footage'] / filename
+                    
+                    video_response = requests.get(video_url, stream=True)
+                    with open(output_path, 'wb') as f:
+                        for chunk in video_response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                    
+                    downloaded.append(output_path)
+                    print(f"[FOOTAGE] Downloaded: {filename}")
+                    
+            except Exception as e:
+                print(f"[FOOTAGE] Pixabay error: {e}")
         
         return downloaded
     
@@ -463,25 +678,27 @@ We cover all the essential concepts, tips, and strategies you need to succeed.
     
     # ==================== MAIN PIPELINE ====================
     
-    def run(self, topic, length_minutes=8, footage_keywords=None):
+    def run(self, topic, length_minutes=8, footage_keywords=None, ai_provider='auto'):
         """
         Run the complete video generation pipeline
         
         Args:
             topic: Video topic
-            length_minutes: Target video length
+            length_minutes: Target video length (default: 8 minutes)
             footage_keywords: Keywords for stock footage search
+            ai_provider: AI provider for script generation ('auto', 'groq', 'gemini', 'ollama')
         """
         print("\n" + "=" * 60)
         print("FACELESS YOUTUBE VIDEO GENERATOR")
         print("=" * 60)
         print(f"Topic: {topic}")
         print(f"Length: {length_minutes} minutes")
+        print(f"AI Provider: {ai_provider}")
         print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
         
         # Step 1: Generate script
-        script = self.generate_script(topic, length_minutes)
+        script = self.generate_script(topic, length_minutes, ai_provider)
         if not script:
             return None
         
@@ -521,14 +738,79 @@ We cover all the essential concepts, tips, and strategies you need to succeed.
         }
 
 
+def interactive_mode():
+    """Interactive mode with prompts for user input"""
+    print("\n" + "=" * 60)
+    print("FACELESS YOUTUBE VIDEO GENERATOR - INTERACTIVE MODE")
+    print("=" * 60)
+    
+    # Show trending topics first
+    print("\nWould you like to see trending topic suggestions? (y/n): ", end="")
+    show_trends = input().strip().lower()
+    if show_trends == 'y':
+        get_trending_topics()
+    
+    # Get topic
+    print("\nEnter your video topic: ", end="")
+    topic = input().strip()
+    if not topic:
+        print("Error: Topic is required!")
+        return 1
+    
+    # Get length
+    print("Enter video length in minutes (default: 8): ", end="")
+    length_input = input().strip()
+    length = int(length_input) if length_input else 8
+    
+    # Get AI provider
+    print("Choose AI provider (auto/groq/gemini/ollama, default: auto): ", end="")
+    ai_provider = input().strip().lower() or 'auto'
+    
+    # Get keywords
+    print("Enter footage keywords (comma-separated, or press Enter for auto): ", end="")
+    keywords_input = input().strip()
+    keywords = [k.strip() for k in keywords_input.split(',')] if keywords_input else None
+    
+    # Run generation
+    generator = FacelessVideoGenerator()
+    result = generator.run(
+        topic=topic,
+        length_minutes=length,
+        footage_keywords=keywords,
+        ai_provider=ai_provider
+    )
+    
+    if result:
+        print("\nYour video is ready!")
+        print(f"Project directory: {result['project_dir']}")
+        return 0
+    else:
+        print("\nVideo generation failed.")
+        return 1
+
+
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description='Generate faceless YouTube videos automatically'
+        description='Generate faceless YouTube videos automatically',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python master_automation.py --topic "5 AI Tools for Productivity" --length 8
+  python master_automation.py --suggest-topics
+  python master_automation.py --interactive
+  python master_automation.py -t "Investment Tips" -l 10 --ai groq
+
+High CPM Niches (Better Monetization):
+  - Finance: $15-$50 CPM
+  - Business: $12-$35 CPM
+  - Technology: $10-$30 CPM
+  - Health: $10-$25 CPM
+  - Education: $8-$20 CPM
+        """
     )
     parser.add_argument(
         '--topic', '-t',
-        required=True,
         help='Video topic'
     )
     parser.add_argument(
@@ -546,14 +828,46 @@ def main():
         '--project', '-p',
         help='Project name (default: auto-generated)'
     )
+    parser.add_argument(
+        '--ai',
+        choices=['auto', 'groq', 'gemini', 'ollama'],
+        default='auto',
+        help='AI provider for script generation (default: auto)'
+    )
+    parser.add_argument(
+        '--suggest-topics',
+        action='store_true',
+        help='Show trending topic suggestions with monetization focus'
+    )
+    parser.add_argument(
+        '--interactive', '-i',
+        action='store_true',
+        help='Run in interactive mode with prompts'
+    )
     
     args = parser.parse_args()
+    
+    # Handle suggest-topics mode
+    if args.suggest_topics:
+        get_trending_topics()
+        return 0
+    
+    # Handle interactive mode
+    if args.interactive:
+        return interactive_mode()
+    
+    # Require topic for normal mode
+    if not args.topic:
+        parser.print_help()
+        print("\nError: --topic is required (or use --interactive or --suggest-topics)")
+        return 1
     
     generator = FacelessVideoGenerator(project_name=args.project)
     result = generator.run(
         topic=args.topic,
         length_minutes=args.length,
-        footage_keywords=args.keywords
+        footage_keywords=args.keywords,
+        ai_provider=args.ai
     )
     
     if result:
