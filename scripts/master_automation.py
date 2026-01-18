@@ -738,7 +738,10 @@ Return ONLY a JSON array of strings, no other text:
             script: Optional script for extracting key points for text overlays
             ai_provider: AI provider for key point extraction
         """
+        import sys
+        
         print("\n[VIDEO] Assembling video...")
+        sys.stdout.flush()
         
         from moviepy.editor import (
             VideoFileClip, AudioFileClip, concatenate_videoclips,
@@ -749,6 +752,7 @@ Return ONLY a JSON array of strings, no other text:
         audio = AudioFileClip(str(voiceover_path))
         duration = audio.duration
         print(f"[VIDEO] Audio duration: {duration:.1f} seconds")
+        sys.stdout.flush()
         
         # Extract key points for text overlays if script provided
         key_points = None
@@ -785,6 +789,7 @@ Return ONLY a JSON array of strings, no other text:
         text_image_paths = []
         if key_points and len(key_points) > 0:
             print(f"[VIDEO] Adding {len(key_points)} text overlays (using PIL)...")
+            sys.stdout.flush()
             
             try:
                 # Calculate timing for each key point
@@ -798,6 +803,8 @@ Return ONLY a JSON array of strings, no other text:
                     
                     try:
                         # Create text image using PIL
+                        print(f"[VIDEO] Creating text image {i+1}...")
+                        sys.stdout.flush()
                         text_img_path = self.create_text_image(
                             point, 
                             self.config['width'], 
@@ -805,23 +812,32 @@ Return ONLY a JSON array of strings, no other text:
                         )
                         text_image_paths.append(text_img_path)
                         
-                        # Create ImageClip with transparency support
-                        txt_clip = ImageClip(text_img_path, transparent=True)
+                        # Create ImageClip from PNG (moviepy handles RGBA automatically)
+                        print(f"[VIDEO] Creating ImageClip {i+1}...")
+                        sys.stdout.flush()
+                        txt_clip = ImageClip(text_img_path)
                         txt_clip = txt_clip.set_start(start_time)
                         txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
                         
                         text_clips.append(txt_clip)
                         print(f"[VIDEO] Created overlay {i+1}/{len(key_points)}: {point[:30]}...")
+                        sys.stdout.flush()
                     except Exception as e:
                         print(f"[VIDEO] Could not create text overlay {i+1}: {e}")
+                        sys.stdout.flush()
+                        import traceback
+                        traceback.print_exc()
                 
                 if text_clips:
                     # Composite video with text overlays
                     print(f"[VIDEO] Compositing {len(text_clips)} text overlays with video...")
+                    sys.stdout.flush()
                     video = CompositeVideoClip([video] + text_clips, size=(self.config['width'], self.config['height']))
                     print(f"[VIDEO] Successfully added {len(text_clips)} text overlays")
+                    sys.stdout.flush()
             except Exception as e:
                 print(f"[VIDEO] Error adding text overlays, continuing without them: {e}")
+                sys.stdout.flush()
                 import traceback
                 traceback.print_exc()
         
