@@ -737,34 +737,22 @@ Return ONLY a JSON array of strings, no other text:
     
     def assemble_video(self, voiceover_path, footage_paths, script=None, ai_provider='auto'):
         """
-        Assemble final video from voiceover and footage with text overlays
+        Assemble final video from voiceover and footage.
         
         Args:
             voiceover_path: Path to voiceover audio
             footage_paths: List of paths to video clips
-            script: Optional script for extracting key points for text overlays
-            ai_provider: AI provider for key point extraction
+            script: Not used (kept for compatibility)
+            ai_provider: Not used (kept for compatibility)
         """
-        import sys
-        
         print("\n[VIDEO] Assembling video...")
-        sys.stdout.flush()
         
-        from moviepy.editor import (
-            VideoFileClip, AudioFileClip, concatenate_videoclips,
-            ImageClip, CompositeVideoClip
-        )
+        from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
         
         # Load audio
         audio = AudioFileClip(str(voiceover_path))
         duration = audio.duration
         print(f"[VIDEO] Audio duration: {duration:.1f} seconds")
-        sys.stdout.flush()
-        
-        # Extract key points for text overlays if script provided
-        key_points = None
-        if script:
-            key_points = self.extract_key_points(script, ai_provider)
         
         # Load and prepare video clips
         clips = []
@@ -792,48 +780,6 @@ Return ONLY a JSON array of strings, no other text:
         video = concatenate_videoclips(clips)
         video = video.subclip(0, duration)
         
-        # Add text overlays if key points available (using PIL, saves to project dir)
-        text_image_paths = []
-        if key_points and len(key_points) > 0:
-            print(f"[VIDEO] Adding {len(key_points)} text overlays...")
-            
-            try:
-                # Calculate timing for each key point
-                interval = duration / (len(key_points) + 1)
-                text_clips = []
-                
-                for i, point in enumerate(key_points):
-                    start_time = (i + 1) * interval - 2.5  # Start 2.5 seconds before center
-                    if start_time < 0:
-                        start_time = 0
-                    
-                    try:
-                        # Create text image using PIL (save to project footage dir)
-                        text_img_path = self.create_text_image(
-                            point, 
-                            self.config['width'], 
-                            self.config['height'],
-                            output_dir=self.dirs['footage'],
-                            index=i
-                        )
-                        text_image_paths.append(text_img_path)
-                        
-                        # Create ImageClip from PNG
-                        txt_clip = ImageClip(str(text_img_path))
-                        txt_clip = txt_clip.set_start(start_time)
-                        txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
-                        
-                        text_clips.append(txt_clip)
-                    except Exception as e:
-                        print(f"[VIDEO] Overlay {i+1} skipped: {e}")
-                
-                if text_clips:
-                    # Composite video with text overlays
-                    video = CompositeVideoClip([video] + text_clips, size=(self.config['width'], self.config['height']))
-                    print(f"[VIDEO] Added {len(text_clips)} text overlays")
-            except Exception as e:
-                print(f"[VIDEO] Skipping text overlays: {e}")
-        
         # Add audio
         video = video.set_audio(audio)
         
@@ -856,14 +802,6 @@ Return ONLY a JSON array of strings, no other text:
         for clip in clips:
             try:
                 clip.close()
-            except:
-                pass
-        
-        # Clean up temp text images
-        import os
-        for img_path in text_image_paths:
-            try:
-                os.remove(img_path)
             except:
                 pass
         
