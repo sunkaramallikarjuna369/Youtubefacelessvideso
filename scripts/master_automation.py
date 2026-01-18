@@ -638,7 +638,7 @@ Return ONLY a JSON array of strings, no other text:
         
         return None
     
-    def create_text_image(self, text, width, height):
+    def create_text_image(self, text, width, height, output_dir=None, index=0):
         """
         Create a text overlay image using PIL (no ImageMagick required).
         
@@ -646,12 +646,14 @@ Return ONLY a JSON array of strings, no other text:
             text: Text to display
             width: Image width
             height: Image height
+            output_dir: Directory to save the image (uses project dir if provided)
+            index: Index number for the filename
             
         Returns:
             Path to the created image
         """
         from PIL import Image, ImageDraw, ImageFont
-        import tempfile
+        import os
         
         # Create transparent image
         img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
@@ -722,11 +724,16 @@ Return ONLY a JSON array of strings, no other text:
             # Draw white text
             draw.text((x, y), line, font=font, fill=(255, 255, 255, 255))
         
-        # Save to temp file
-        temp_path = tempfile.mktemp(suffix='.png')
-        img.save(temp_path, 'PNG')
+        # Save to project directory instead of temp (more reliable on Windows)
+        if output_dir:
+            img_path = os.path.join(str(output_dir), f'text_overlay_{index}.png')
+        else:
+            import tempfile
+            img_path = tempfile.mktemp(suffix='.png')
         
-        return temp_path
+        img.save(img_path, 'PNG')
+        
+        return img_path
     
     def assemble_video(self, voiceover_path, footage_paths, script=None, ai_provider='auto'):
         """
@@ -785,9 +792,47 @@ Return ONLY a JSON array of strings, no other text:
         video = concatenate_videoclips(clips)
         video = video.subclip(0, duration)
         
-        # Text overlays disabled temporarily due to compatibility issues on Windows
-        # The video will generate without text overlays for now
+        # Add text overlays if key points available (using PIL, saves to project dir)
         text_image_paths = []
+        if key_points and len(key_points) > 0:
+            print(f"[VIDEO] Adding {len(key_points)} text overlays...")
+            
+            try:
+                # Calculate timing for each key point
+                interval = duration / (len(key_points) + 1)
+                text_clips = []
+                
+                for i, point in enumerate(key_points):
+                    start_time = (i + 1) * interval - 2.5  # Start 2.5 seconds before center
+                    if start_time < 0:
+                        start_time = 0
+                    
+                    try:
+                        # Create text image using PIL (save to project footage dir)
+                        text_img_path = self.create_text_image(
+                            point, 
+                            self.config['width'], 
+                            self.config['height'],
+                            output_dir=self.dirs['footage'],
+                            index=i
+                        )
+                        text_image_paths.append(text_img_path)
+                        
+                        # Create ImageClip from PNG
+                        txt_clip = ImageClip(str(text_img_path))
+                        txt_clip = txt_clip.set_start(start_time)
+                        txt_clip = txt_clip.set_duration(5)  # Show for 5 seconds
+                        
+                        text_clips.append(txt_clip)
+                    except Exception as e:
+                        print(f"[VIDEO] Overlay {i+1} skipped: {e}")
+                
+                if text_clips:
+                    # Composite video with text overlays
+                    video = CompositeVideoClip([video] + text_clips, size=(self.config['width'], self.config['height']))
+                    print(f"[VIDEO] Added {len(text_clips)} text overlays")
+            except Exception as e:
+                print(f"[VIDEO] Skipping text overlays: {e}")
         
         # Add audio
         video = video.set_audio(audio)
