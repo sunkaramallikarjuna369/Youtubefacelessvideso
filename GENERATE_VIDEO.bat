@@ -1,83 +1,105 @@
 @echo off
 setlocal enabledelayedexpansion
 
+echo.
 echo ============================================================
 echo   YOUTUBE FACELESS VIDEO GENERATOR - ONE CLICK AUTOMATION
 echo ============================================================
 echo.
+echo   This tool will automatically:
+echo   1. Set up a Python virtual environment
+echo   2. Install all required packages
+echo   3. Generate videos with AI scripts and stock footage
+echo.
+echo ============================================================
+echo.
 
-:: Check if Python is installed
+:: Step 1: Check Python
+echo [STEP 1/4] Checking Python installation...
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Python is not installed or not in PATH!
-    echo Please install Python 3.8+ from https://www.python.org/downloads/
+    echo.
+    echo   ERROR: Python is not installed or not in PATH!
+    echo   Please install Python 3.8+ from https://www.python.org/downloads/
+    echo.
     pause
     exit /b 1
 )
+for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYVER=%%i
+echo   Found Python %PYVER%
+echo.
 
 :: Set the script directory
 set "SCRIPT_DIR=%~dp0"
 cd /d "%SCRIPT_DIR%"
 
-:: Check if virtual environment exists
+:: Step 2: Virtual Environment
+echo [STEP 2/4] Setting up virtual environment...
 if not exist "venv" (
-    echo [SETUP] Creating virtual environment...
+    echo   Creating new virtual environment...
     python -m venv venv
     if errorlevel 1 (
-        echo ERROR: Failed to create virtual environment!
+        echo   ERROR: Failed to create virtual environment!
         pause
         exit /b 1
     )
-    echo [SETUP] Virtual environment created successfully!
+    echo   Virtual environment created!
+) else (
+    echo   Virtual environment already exists.
 )
+echo.
 
 :: Activate virtual environment
-echo [SETUP] Activating virtual environment...
+echo [STEP 3/4] Activating virtual environment and installing packages...
 call venv\Scripts\activate.bat
-
-:: Install/upgrade dependencies
-echo [SETUP] Installing dependencies...
+echo   Installing/updating packages (this may take a minute)...
 python -m pip install --upgrade pip -q 2>nul
-python -m pip install -r requirements.txt -q
-if errorlevel 1 (
-    echo WARNING: Some packages may have failed to install.
-    echo Continuing anyway...
-)
+python -m pip install -r requirements.txt -q 2>nul
+echo   Packages installed!
+echo.
 
-:: Check if .env file exists
+:: Step 4: Check .env file
+echo [STEP 4/4] Checking API keys configuration...
 if not exist ".env" (
-    echo.
-    echo ============================================================
-    echo   API KEYS CONFIGURATION REQUIRED
-    echo ============================================================
-    echo.
-    echo No .env file found. Creating from template...
-    
     if exist ".env.example" (
+        echo   Creating .env from template...
         copy ".env.example" ".env" >nul
-        echo.
-        echo IMPORTANT: Please edit the .env file with your API keys:
-        echo   - GEMINI_API_KEY (Google Gemini for AI script generation)
-        echo   - GROQ_API_KEY (Groq for faster AI script generation)
-        echo   - PEXELS_API_KEY (Pexels for stock video footage)
-        echo   - PIXABAY_API_KEY (Pixabay for additional stock footage)
-        echo.
-        echo Get your free API keys from:
-        echo   - Gemini: https://makersuite.google.com/app/apikey
-        echo   - Groq: https://console.groq.com/keys
-        echo   - Pexels: https://www.pexels.com/api/
-        echo   - Pixabay: https://pixabay.com/api/docs/
-        echo.
-        notepad ".env"
-        echo.
-        echo After editing .env, run this script again.
-        pause
-        exit /b 0
+        echo   .env file created!
     ) else (
-        echo ERROR: .env.example not found!
+        echo   ERROR: .env.example not found!
         pause
         exit /b 1
     )
+)
+
+:: Check if keys are placeholder values or real keys
+findstr /C:"your_" ".env" >nul 2>&1
+if errorlevel 1 (
+    echo   API keys are configured!
+    echo.
+    echo ============================================================
+    echo   SETUP COMPLETE! Ready to generate videos.
+    echo ============================================================
+    echo.
+    timeout /t 2 >nul
+    goto menu
+) else (
+    echo.
+    echo ============================================================
+    echo   API KEYS NEED TO BE CONFIGURED
+    echo ============================================================
+    echo.
+    echo   The .env file contains placeholder values.
+    echo   Please edit .env and add your API keys.
+    echo.
+    echo   Opening .env file in Notepad...
+    echo.
+    notepad ".env"
+    echo.
+    echo   After saving your API keys, run this script again.
+    echo.
+    pause
+    exit /b 0
 )
 
 :: Main menu
