@@ -299,6 +299,66 @@ Write the complete script now:"""
             print(f"[SCRIPT] Gemini error: {e}")
         return None
     
+    # ==================== SEGMENT-BASED KEYWORD EXTRACTION ====================
+    
+    def extract_segment_keywords(self, script, ai_provider='auto'):
+        """
+        Extract keywords for each section of the script for better footage matching.
+        This enables segment-based footage that matches what's being said.
+        
+        Args:
+            script: The full video script
+            ai_provider: AI provider to use for extraction
+            
+        Returns:
+            List of dicts with 'text' and 'keywords' for each segment
+        """
+        print("\n[KEYWORDS] Extracting segment-based keywords for better footage matching...")
+        
+        prompt = f"""Analyze this video script and divide it into 5-7 logical sections.
+For each section, provide 2-3 specific keywords that would find relevant stock footage.
+
+Script:
+{script[:3000]}
+
+Return ONLY a JSON array in this exact format (no other text):
+[
+  {{"section": 1, "summary": "brief description", "keywords": ["keyword1", "keyword2"]}},
+  {{"section": 2, "summary": "brief description", "keywords": ["keyword1", "keyword2"]}}
+]
+
+Make keywords specific and visual (e.g., "person typing laptop" not "productivity").
+Focus on scenes that can be found in stock footage libraries."""
+
+        result = None
+        
+        if ai_provider == 'auto':
+            result = self._generate_with_groq(prompt)
+            if result is None:
+                result = self._generate_with_gemini(prompt)
+        elif ai_provider == 'groq':
+            result = self._generate_with_groq(prompt)
+        elif ai_provider == 'gemini':
+            result = self._generate_with_gemini(prompt)
+        
+        if result is None:
+            print("[KEYWORDS] Could not extract keywords, using topic-based fallback")
+            return None
+        
+        try:
+            import re
+            json_match = re.search(r'\[[\s\S]*\]', result)
+            if json_match:
+                segments = json.loads(json_match.group())
+                print(f"[KEYWORDS] Extracted {len(segments)} segments:")
+                for seg in segments:
+                    print(f"  Section {seg.get('section', '?')}: {seg.get('keywords', [])}")
+                return segments
+        except Exception as e:
+            print(f"[KEYWORDS] Error parsing keywords: {e}")
+        
+        return None
+    
     # ==================== VOICE GENERATION ====================
     
     def generate_voiceover(self, script, voice=None):
@@ -353,6 +413,53 @@ Write the complete script now:"""
         
         print(f"[FOOTAGE] Total clips downloaded: {len(downloaded)}")
         return downloaded
+    
+    def download_segment_footage(self, segments, clips_per_segment=2):
+        """
+        Download footage for each script segment for better matching.
+        
+        Args:
+            segments: List of segment dicts with 'keywords' field
+            clips_per_segment: Number of clips per segment
+            
+        Returns:
+            List of lists, where each inner list contains footage paths for that segment
+        """
+        print("\n[FOOTAGE] Downloading segment-based footage for better matching...")
+        
+        segment_footage = []
+        
+        for i, segment in enumerate(segments):
+            keywords = segment.get('keywords', [])
+            if not keywords:
+                continue
+                
+            print(f"\n[FOOTAGE] Segment {i+1}: {keywords}")
+            
+            segment_clips = []
+            
+            # Try Pexels first
+            for keyword in keywords[:2]:
+                pexels_clips = self._download_from_pexels([keyword], clips_per_segment)
+                segment_clips.extend(pexels_clips)
+                if len(segment_clips) >= clips_per_segment:
+                    break
+            
+            # If not enough, try Pixabay
+            if len(segment_clips) < clips_per_segment:
+                for keyword in keywords[:2]:
+                    pixabay_clips = self._download_from_pixabay([keyword], clips_per_segment)
+                    segment_clips.extend(pixabay_clips)
+                    if len(segment_clips) >= clips_per_segment:
+                        break
+            
+            segment_footage.append(segment_clips)
+            print(f"[FOOTAGE] Segment {i+1}: {len(segment_clips)} clips downloaded")
+        
+        total_clips = sum(len(clips) for clips in segment_footage)
+        print(f"\n[FOOTAGE] Total clips downloaded: {total_clips} across {len(segment_footage)} segments")
+        
+        return segment_footage
     
     def _download_from_pexels(self, keywords, clips_per_keyword):
         """Download footage from Pexels API"""
@@ -685,7 +792,7 @@ We cover all the essential concepts, tips, and strategies you need to succeed.
         Args:
             topic: Video topic
             length_minutes: Target video length (default: 8 minutes)
-            footage_keywords: Keywords for stock footage search
+            footage_keywords: Keywords for stock footage search (if None, uses AI-based segment extraction)
             ai_provider: AI provider for script generation ('auto', 'groq', 'gemini', 'ollama')
         """
         print("\n" + "=" * 60)
@@ -705,10 +812,31 @@ We cover all the essential concepts, tips, and strategies you need to succeed.
         # Step 2: Generate voiceover
         voiceover = self.generate_voiceover(script)
         
-        # Step 3: Download footage
+        # Step 3: Download footage with smart segment-based matching
         if footage_keywords is None:
-            footage_keywords = topic.split()[:3]
-        footage = self.download_footage(footage_keywords)
+            # Try AI-based segment extraction for better footage matching
+            segments = self.extract_segment_keywords(script, ai_provider)
+            
+            if segments and len(segments) > 0:
+                # Use segment-based footage for better relevance
+                segment_footage = self.download_segment_footage(segments, clips_per_segment=2)
+                # Flatten the segment footage into a single list
+                footage = []
+                for seg_clips in segment_footage:
+                    footage.extend(seg_clips)
+                
+                if not footage:
+                    # Fallback to topic-based keywords
+                    print("[FOOTAGE] Segment-based download failed, using topic keywords...")
+                    footage_keywords = topic.split()[:3]
+                    footage = self.download_footage(footage_keywords)
+            else:
+                # Fallback to topic-based keywords
+                footage_keywords = topic.split()[:3]
+                footage = self.download_footage(footage_keywords)
+        else:
+            # User provided specific keywords
+            footage = self.download_footage(footage_keywords)
         
         # Step 4: Assemble video
         video = self.assemble_video(voiceover, footage)
